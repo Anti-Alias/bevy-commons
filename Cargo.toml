@@ -1,0 +1,10 @@
+[package]
+name = "vidya-commons"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bevy = "0.8.0"
+
+[profile.dev.package."*"]
+opt-level = 3
