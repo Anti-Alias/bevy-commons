@@ -1,26 +1,44 @@
 use bevy::prelude::*;
 use bevy::utils::HashMap;
 
-pub struct ScreenLoaderPlugin;
-impl Plugin for ScreenLoaderPlugin {
+/// Plugin that implements screen loading/unloading.
+#[derive(Default)]
+pub struct ScreenPlugin {
+    screens: Screens
+}
+impl ScreenPlugin {
+
+    /// Inserts a named screen loader with the default unload function.
+    pub fn insert(mut self, name: &'static str, load_fn: fn(&'static str, &mut World)) -> Self {
+        self.screens.loaders.insert(name, Screen {
+            load_fn,
+            unload_fn: unload_default
+        });
+        self
+    }
+
+    /// Inserts a named screen loader.
+    pub fn insert_screen(mut self, name: &'static str, loader: Screen) -> Self {
+        self.screens.loaders.insert(name, loader);
+        self
+    }
+}
+impl Plugin for ScreenPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_to_stage(CoreStage::PostUpdate, handle_load_requests);
+        app
+            .insert_resource(self.screens.clone())
+            .add_system_to_stage(CoreStage::PostUpdate, handle_load_requests);
     }
 }
 
 
 /// Resource that can be used to load named screens
-#[derive(Default)]
-pub struct ScreenLoaders {
+#[derive(Default, Clone)]
+pub struct Screens {
     load_requests: Vec<&'static str>,
-    loaders: HashMap<&'static str, ScreenLoader>
+    loaders: HashMap<&'static str, Screen>
 }
-impl ScreenLoaders {
-    /// Inserts a named screen loader.
-    pub fn insert(mut self, name: &'static str, loader: ScreenLoader) -> Self {
-        self.loaders.insert(name, loader);
-        self
-    }
+impl Screens {
 
     /// Unloads current screen if applicable, and loads screen specified.
     pub fn load_screen(&mut self, name: &'static str) {
@@ -33,22 +51,12 @@ pub struct CurrentScreen(&'static str);
 
 /// Responsible for loading/unloading a screen.
 #[derive(Copy, Clone)]
-pub struct ScreenLoader {
+pub struct Screen {
     /// Function pointer responsible for loading the screen.
     pub load_fn: fn(&'static str, world: &mut World),
 
     /// Function pointer reponsible for unloading the screen.
     pub unload_fn: fn(&'static str, world: &mut World)
-}
-impl ScreenLoader {
-    /// Creates a screen loader instance with a default unloader function.
-    /// Upon unloading, entities not marked with the [`Retain`] component will be despawned.
-    pub fn new(load_fn: fn(&'static str, world: &mut World)) -> Self {
-        Self {
-            load_fn,
-            unload_fn: unload_default
-        }
-    }
 }
 
 /// Unload function that despawns entities without the [`Retain`] marker component.
@@ -60,32 +68,32 @@ pub fn unload_default(_name: &'static str, world: &mut World) {
     }
 }
 
-/// Marker trait that tells screen loaders to not depsawn a particular entity when loading a new screen.
+/// Marker trait that marks an [`Entity`] as "retained", meaning that it should not be despawned during a screen unload.
+/// Screen unloaders are not required to honor this, though the default unloader does.
 #[derive(Component)]
 pub struct Retain;
 
-/// Reads screen load requests, and kicks them off
+
+/// System that reads screen load requests and kicks them off.
 fn handle_load_requests(
-    loaders: Res<ScreenLoaders>,
+    screens: Res<Screens>,
     current_screen: Option<ResMut<CurrentScreen>>,
     mut commands: Commands
 ) {
-    // For all requests...
-    for screen_name in &loaders.load_requests {
-
-        let screen_name = screen_name.clone();
+    for request_name in &screens.load_requests {
+        let screen_name = request_name.clone();
         
-        // If we're currently on a screen, unload the current screen first
+        // If we're currently on a screen, unload it
         if let Some(ref current_screen) = current_screen {
             let current_screen_name = current_screen.0;
-            let unload_fn = loaders.loaders[current_screen_name].load_fn;
+            let unload_fn = screens.loaders[current_screen_name].load_fn;
             commands.add(move |world: &mut World| {
                 unload_fn(current_screen_name, world);
             });
         }
 
         // Load requested screen
-        let load_fn = loaders.loaders[screen_name].load_fn;
+        let load_fn = screens.loaders[screen_name].load_fn;
         commands.add(move |world: &mut World| {
             load_fn(screen_name, world);
         });

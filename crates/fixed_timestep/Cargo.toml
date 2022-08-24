@@ -1,0 +1,8 @@
+[package]
+name = "fixed_timestep"
+version = "0.1.0"
+edition = "2021"
+description = "Tiny crate that adds a "
+
+[dependencies]
+bevy = "0.8.0"

@@ -1,0 +1,8 @@
+[package]
+name = "sprite_3d"
+version = "0.1.0"
+edition = "2021"
+description = "Repository for rendering sprites and sprite animations in 3D"
+
+[dependencies]
+bevy = "0.8.0"
