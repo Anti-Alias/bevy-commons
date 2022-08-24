@@ -7,6 +7,14 @@ use bevy::prelude::*;
 #[derive(Component, Debug)]
 struct Ball;
 
+// Wall constants
+const FLOOR: f32 = 0.0;
+const LEFT_WALL: f32 = -5.0;
+const RIGHT_WALL: f32 = 5.0;
+const NEAR_WALL: f32 = 5.0;
+const FAR_WALL: f32 = -5.0;
+const JUMP_SPEED: f32 = 0.2;
+
 /// Example where only a single falling entity is spawned.
 pub fn main() {
     App::new()
@@ -14,16 +22,9 @@ pub fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(PhysicsPlugin)
         .add_startup_system(startup)
-        .add_system(ping_pong)
+        .add_system(bounce_ball)
         .run();
 }
-
-const FLOOR: f32 = 0.0;
-const LEFT_WALL: f32 = -5.0;
-const RIGHT_WALL: f32 = 5.0;
-const NEAR_WALL: f32 = 5.0;
-const FAR_WALL: f32 = -5.0;
-const JUMP_SPEED: f32 = 0.2;
 
 fn startup(
     mut commands: Commands,
@@ -61,11 +62,15 @@ fn startup(
             material: materials.add(Color::RED.into()),
             ..default()
         })
-        .insert_bundle(PhysicsBundle::new(
-            Vec3::new(0.0, 0.5, 0.0),
-            Vec3::new(1.0, 1.0, 1.0),
-            PhysicsShape::Cuboid
-        ).with_velocity(Vec3::new(0.05, JUMP_SPEED, 0.025)));
+        .insert_bundle(
+            PhysicsBundle::new(
+                Vec3::new(0.0, 0.5, 0.0),
+                Vec3::new(1.0, 1.0, 1.0),
+                PhysicsShape::Cuboid
+            )
+            .with_velocity(Vec3::new(0.05, JUMP_SPEED, 0.025))
+        )
+        .insert(Ball);
 
     // Spawns camera
     commands.spawn_bundle(Camera3dBundle {
@@ -74,7 +79,14 @@ fn startup(
     });
 }
 
-fn ping_pong(mut entities: Query<(&mut Position, &Bounds, &mut Velocity)>) {
+fn bounce_ball(mut entities: Query<
+    (
+        &mut Position,
+        &Bounds,
+        &mut Velocity
+    ),
+    With<Ball>>
+) {
     for (mut pos, bounds, mut vel) in &mut entities {
 
         // Bounces off floor
