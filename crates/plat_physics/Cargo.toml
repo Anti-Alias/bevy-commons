@@ -6,7 +6,6 @@ description = "A simple platformer-orient physics engine for the Bevy game engin
 
 [dependencies]
 bevy = { version = "0.8.0", features = ["dynamic"] }
-fixed_timestep = { path = "../fixed_timestep" }
 
 # Enable a small amount of optimization in debug mode
 [profile.dev]

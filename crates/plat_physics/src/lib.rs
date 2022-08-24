@@ -1,11 +1,11 @@
-    mod collision;
+mod collision;
 
 use std::ops::{Neg, Sub, Add};
 use std::time::Duration;
 use bevy::math::Vec3Swizzles;
 use bevy::prelude::*;
-use bevy::time::{FixedTimestep, FixedTimesteps};
 
+use bevy::time::{FixedTimestep, FixedTimesteps};
 use collision::cuboid_collision;
 
 const PHYSICS_TIMESTEP: &str = "PHYSICS_TIMESTEP";
@@ -53,7 +53,7 @@ impl Plugin for PhysicsPlugin {
             )
             .add_system_to_stage(CoreStage::PostUpdate, lerp_transform
                 .label(PhysicsSystems::LerpTransform)
-                .after(apply_voxel_collisions)
+                .after(PhysicsSystems::ApplyVoxelCollisions)
             );
     }
 }

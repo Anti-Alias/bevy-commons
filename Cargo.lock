@@ -1375,13 +1375,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fixed_timestep"
-version = "0.1.0"
-dependencies = [
- "bevy",
-]
-
-[[package]]
 name = "fixedbitset"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2391,7 +2384,6 @@ name = "plat_physics"
 version = "0.1.0"
 dependencies = [
  "bevy",
- "fixed_timestep",
 ]
 
 [[package]]

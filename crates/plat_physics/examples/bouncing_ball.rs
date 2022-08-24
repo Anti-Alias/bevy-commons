@@ -1,5 +1,4 @@
 use bevy::prelude::shape::{Plane, Icosphere};
-use fixed_timestep::FixedTimestepConfig;
 use plat_physics::*;
 use bevy::prelude::*;
 
