@@ -18,9 +18,8 @@ const JUMP_SPEED: f32 = 0.2;
 /// Example where only a single falling entity is spawned.
 pub fn main() {
     App::new()
-        .insert_resource(FixedTimestepConfig::default())
         .add_plugins(DefaultPlugins)
-        .add_plugin(PhysicsPlugin)
+        .add_plugin(PhysicsPlugin::default())
         .add_startup_system(startup)
         .add_system(bounce_ball)
         .run();

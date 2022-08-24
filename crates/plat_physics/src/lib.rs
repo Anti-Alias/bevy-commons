@@ -1,12 +1,12 @@
     mod collision;
 
 use std::ops::{Neg, Sub, Add};
+use std::time::Duration;
 use bevy::math::Vec3Swizzles;
 use bevy::prelude::*;
 use bevy::time::{FixedTimestep, FixedTimesteps};
 
 use collision::cuboid_collision;
-use fixed_timestep::FixedTimestepConfig;
 
 const PHYSICS_TIMESTEP: &str = "PHYSICS_TIMESTEP";
 
@@ -14,15 +14,19 @@ const PHYSICS_TIMESTEP: &str = "PHYSICS_TIMESTEP";
 /// Adds a simple platformer voxel-based physics engine.
 /// All systems are added to the [`CoreStage::PostUpdate`] stage, so the setting of positions, velocities, etc
 /// should be done in [`CoreStage::Update`] or prior for optimal results.
-pub struct PhysicsPlugin;
+pub struct PhysicsPlugin {
+    pub timestep_duration: Duration
+}
+impl Default for PhysicsPlugin {
+    fn default() -> Self {
+        Self {
+            timestep_duration: Duration::from_secs_f64(1.0/60.0)
+        }
+    }
+}
 impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
-
-        let timestep = app.world
-            .get_resource::<FixedTimestepConfig>()
-            .expect("Missing config 'FixedTimestepConfig'")
-            .timestep_duration
-            .as_secs_f64();
+        let timestep = self.timestep_duration.as_secs_f64();
         app
             .add_system_to_stage(CoreStage::PostUpdate, sync_positions
                 .label(PhysicsSystems::SyncPositions)
