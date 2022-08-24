@@ -1,4 +1,4 @@
-mod collision;
+mod voxel;
 
 use std::ops::{Neg, Sub, Add};
 use std::time::Duration;
@@ -6,7 +6,8 @@ use bevy::math::Vec3Swizzles;
 use bevy::prelude::*;
 
 use bevy::time::{FixedTimestep, FixedTimesteps};
-use collision::cuboid_collision;
+
+use voxel::*;
 
 const PHYSICS_TIMESTEP: &str = "PHYSICS_TIMESTEP";
 
@@ -126,55 +127,6 @@ impl Bounds {
     }
 }
 
-/// Helper struct that defines an axis-aligned bounding box.
-pub struct AABB {
-    pub center: Vec3,
-    pub half_extents: Vec3
-}
-impl AABB {
-    /// Width, height and depth of AABB
-    pub fn size(&self) -> Vec3 {
-        self.half_extents * 2.0
-    }
-    pub fn left(&self) -> f32 {
-        self.center.x - self.half_extents.x
-    }
-    pub fn right(&self) -> f32 {
-        self.center.x + self.half_extents.x
-    }
-    pub fn bottom(&self) -> f32 {
-        self.center.y - self.half_extents.y
-    }
-    pub fn top(&self) -> f32 {
-        self.center.y + self.half_extents.y
-    }
-    pub fn near(&self) -> f32 {
-        self.center.z + self.half_extents.z
-    }
-    pub fn far(&self) -> f32 {
-        self.center.z - self.half_extents.z
-    }
-    pub fn set_left(&mut self, left: f32) {
-        self.center.x = left + self.half_extents.x;
-    }
-    pub fn set_right(&mut self, right: f32) {
-        self.center.x = right - self.half_extents.x;
-    }
-    pub fn set_bottom(&mut self, bottom: f32) {
-        self.center.y = bottom + self.half_extents.y;
-    }
-    pub fn set_top(&mut self, top: f32) {
-        self.center.y = top - self.half_extents.y;
-    }
-    pub fn set_near(&mut self, near: f32) {
-        self.center.z = near - self.half_extents.z;
-    }
-    pub fn set_far(&mut self, far: f32) {
-        self.center.z = far + self.half_extents.z;
-    }
-
-}
-
 
 /// Frictional value of an [`Entity`].
 /// Used to dampen movement.
@@ -233,210 +185,63 @@ impl PhysicsBundle {
 //////////////////////////////////////////////// Helper struct(s) ////////////////////////////////////////////////
 
 /// Represents the movement of an [`Entity`] through 3D space.
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Movement {
-    /// Position of the body
-    pub pos: Vec3,
-    /// Velocity of the body
-    pub vel: Vec3,
-    /// Size of the body as an AABB
-    pub size: Vec3,
+    /// Bounding box of the moving object
+    pub aabb: AABB,
     /// Shape of the body
-    pub shape: PhysicsShape
+    pub shape: PhysicsShape,
+    /// Velocity of the object
+    pub vel: Vec3,
 }
 
-/// A collider stored in a [`VoxelChunk`].
-#[derive(Copy, Clone)]
-pub struct Voxel {
-    pub collision_fn: fn(&Bounds, &Movement)
+/// Helper struct that defines an axis-aligned bounding box.
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub struct AABB {
+    pub center: Vec3,
+    pub half_extents: Vec3
 }
-impl Voxel {
-    pub fn cuboid() -> Self {
-        Self {
-            collision_fn: cuboid_collision
-        }
+impl AABB {
+    /// Width, height and depth of AABB
+    pub fn size(&self) -> Vec3 {
+        self.half_extents * 2.0
     }
-}
-
-/// Stores both a [`Voxel`] and its orientation.
-#[derive(Copy, Clone)]
-struct VoxelData {
-    //voxel: Voxel,
-    //orientation: Orientation
-}
-
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
-pub struct Orientation {
-    /// Rotation along x axis
-    pub x_rot: Degree,
-    /// Rotation along y axis
-    pub y_rot: Degree,
-    /// Rotation along z axis
-    pub z_rot: Degree
-}
-impl Orientation {
-    pub fn relative_to(&self, other: Orientation) -> Orientation {
-        Orientation {
-            x_rot: self.x_rot - other.x_rot,
-            y_rot: self.y_rot - other.y_rot,
-            z_rot: self.z_rot - other.z_rot
-        }
+    pub fn left(&self) -> f32 {
+        self.center.x - self.half_extents.x
     }
-    pub fn rotate_vec(&self, mut vec: Vec3) -> Vec3 {
-        vec = self.z_rot.rotate_z(vec);
-        vec = self.y_rot.rotate_y(vec);
-        vec = self.x_rot.rotate_x(vec);
-        vec
+    pub fn right(&self) -> f32 {
+        self.center.x + self.half_extents.x
     }
-}
-
-/// Degree of an [`Orientation`] at perfect 90 degree angles.
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Default)]
-pub enum Degree {
-    #[default]
-    Zero,
-    Ninty,
-    OneEighty,
-    TwoSeventy
-}
-
-impl Degree {
-    fn rotate(self, vec: Vec2) -> Vec2 {
-        match self {
-            Degree::Zero => vec,
-            Degree::Ninty => Vec2 {
-                x: -vec.y,
-                y: vec.x
-            },
-            Degree::OneEighty => Vec2 {
-                x: -vec.x,
-                y: -vec.y
-            },
-            Degree::TwoSeventy => Vec2 {
-                x: vec.y,
-                y: -vec.x
-            }
-        }
+    pub fn bottom(&self) -> f32 {
+        self.center.y - self.half_extents.y
     }
-    fn rotate_x(self, vec: Vec3) -> Vec3 {
-        let rotated = self.rotate(vec.yz());
-        Vec3::new(vec.x, rotated.x, rotated.y)
+    pub fn top(&self) -> f32 {
+        self.center.y + self.half_extents.y
     }
-    fn rotate_y(self, vec: Vec3) -> Vec3 {
-        let rotated = self.rotate(vec.xz());
-        Vec3::new(rotated.x, vec.y, rotated.y)
+    pub fn near(&self) -> f32 {
+        self.center.z + self.half_extents.z
     }
-    fn rotate_z(self, vec: Vec3) -> Vec3 {
-        let rotated = self.rotate(vec.xy());
-        Vec3::new(rotated.x, rotated.y, vec.z)
+    pub fn far(&self) -> f32 {
+        self.center.z - self.half_extents.z
     }
-    fn to_num(self) -> usize {
-        match self {
-            Degree::Zero => 0,
-            Degree::Ninty => 1,
-            Degree::OneEighty => 2,
-            Degree::TwoSeventy => 3
-        }
+    pub fn set_left(&mut self, left: f32) {
+        self.center.x = left + self.half_extents.x;
     }
-    fn from_num(num: usize) -> Degree {
-        let num = num % 4;
-        match num {
-            0 => Degree::Zero,
-            1 => Degree::Ninty,
-            2 => Degree::OneEighty,
-            3 => Degree::TwoSeventy,
-            _ => panic!("Invalid number {}", num)
-        }
+    pub fn set_right(&mut self, right: f32) {
+        self.center.x = right - self.half_extents.x;
     }
-}
-impl Add for Degree {
-    type Output = Degree;
-    fn add(self, rhs: Self) -> Self::Output {
-        Degree::from_num(self.to_num() + rhs.to_num())
+    pub fn set_bottom(&mut self, bottom: f32) {
+        self.center.y = bottom + self.half_extents.y;
     }
-}
-impl Sub for Degree {
-    type Output = Degree;
-    fn sub(self, rhs: Self) -> Self::Output {
-        Degree::from_num(self.to_num() - rhs.to_num())
+    pub fn set_top(&mut self, top: f32) {
+        self.center.y = top - self.half_extents.y;
     }
-}
-impl Neg for Degree {
-    type Output = Degree;
-    fn neg(self) -> Self::Output {
-        match self {
-            Self::Zero => Self::OneEighty,
-            Self::Ninty => Self::TwoSeventy,
-            Self::OneEighty => Self::Zero,
-            Self::TwoSeventy => Self::Ninty
-        }
+    pub fn set_near(&mut self, near: f32) {
+        self.center.z = near - self.half_extents.z;
     }
-}
-
-/// Represents a chunk of [`Voxel`]s.
-/// Metadata about each chunk spawned i in [`VoxelChunks`].
-#[derive(Component)]
-pub struct VoxelChunk(Vec<Option<VoxelData>>);
-
-/// Resource that keeps track of entities with [`VoxelChunk`]s.
-pub struct VoxelChunks {
-    size: UVec3,
-    voxel_size: Vec3
-}
-impl VoxelChunks {
-    // Creates a new terrain chunk, allocating empty voxels.
-    pub fn new(size: UVec3, voxel_size: Vec3) -> Self {
-        if voxel_size.x < 0.0 || voxel_size.y < 0.0 || voxel_size.z < 0.0 {
-            panic!("Invalid collider size: {}", voxel_size);
-        }
-        Self {
-            size,
-            voxel_size
-        }
+    pub fn set_far(&mut self, far: f32) {
+        self.center.z = far + self.half_extents.z;
     }
-
-    /// Size of each voxel in units.
-    pub fn voxel_size(&self) -> Vec3 {
-        self.voxel_size
-    }
-
-    /// Size of chunk in voxels.
-    pub fn size(&self) -> UVec3 {
-        self.size
-    }
-
-    /// Size of chunk in units.
-    pub fn unit_size(&self) -> Vec3 {
-        self.size.as_vec3() * self.voxel_size
-    }
-
-    // /// Gets voxel from this chunk.
-    // /// Returns None if out of bounds, or voxel was not present at the coordinates specified.
-    // pub fn get_voxel(&self, coords: UVec3, chunk: &VoxelChunk) -> Option<&Voxel> {
-    //     let idx = self.to_voxel_index(coords);
-    //     self.voxels
-    //         .get(idx)
-    //         .and_then(|vox_opt| vox_opt.as_ref())
-    // }
-
-    // /// Gets mutable voxel from this chunk.
-    // /// Returns None if out of bounds, or voxel was not present at the coordinates specified.
-    // pub fn get_voxel_mut(&mut self, coords: UVec3) -> Option<&mut Voxel> {
-    //     let idx = self.to_voxel_index(coords);
-    //     self.voxels
-    //         .get_mut(idx)
-    //         .and_then(|vox_opt| vox_opt.as_mut())
-    // }
-
-    // /// Converts coordinates to voxel index
-    // fn to_voxel_index(&self, coords: UVec3) -> usize {
-    //     let x = coords.x;
-    //     let y = coords.y;
-    //     let z = coords.z;
-    //     let w = self.size.x;
-    //     let h = self.size.y;
-    //     let index = x + y*w + z*(w + h);
-    //     index as usize
-    // }
 }
 
 //////////////////////////////////////////////// Systems ////////////////////////////////////////////////
