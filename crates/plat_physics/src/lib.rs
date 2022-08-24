@@ -126,6 +126,56 @@ impl Bounds {
     }
 }
 
+/// Helper struct that defines an axis-aligned bounding box.
+pub struct AABB {
+    pub center: Vec3,
+    pub half_extents: Vec3
+}
+impl AABB {
+    /// Width, height and depth of AABB
+    pub fn size(&self) -> Vec3 {
+        self.half_extents * 2.0
+    }
+    pub fn left(&self) -> f32 {
+        self.center.x - self.half_extents.x
+    }
+    pub fn right(&self) -> f32 {
+        self.center.x + self.half_extents.x
+    }
+    pub fn bottom(&self) -> f32 {
+        self.center.y - self.half_extents.y
+    }
+    pub fn top(&self) -> f32 {
+        self.center.y + self.half_extents.y
+    }
+    pub fn near(&self) -> f32 {
+        self.center.z + self.half_extents.z
+    }
+    pub fn far(&self) -> f32 {
+        self.center.z - self.half_extents.z
+    }
+    pub fn set_left(&mut self, left: f32) {
+        self.center.x = left + self.half_extents.x;
+    }
+    pub fn set_right(&mut self, right: f32) {
+        self.center.x = right - self.half_extents.x;
+    }
+    pub fn set_bottom(&mut self, bottom: f32) {
+        self.center.y = bottom + self.half_extents.y;
+    }
+    pub fn set_top(&mut self, top: f32) {
+        self.center.y = top - self.half_extents.y;
+    }
+    pub fn set_near(&mut self, near: f32) {
+        self.center.z = near - self.half_extents.z;
+    }
+    pub fn set_far(&mut self, far: f32) {
+        self.center.z = far + self.half_extents.z;
+    }
+
+}
+
+
 /// Frictional value of an [`Entity`].
 /// Used to dampen movement.
 #[derive(Component, Debug, Copy, Clone, PartialEq)]
