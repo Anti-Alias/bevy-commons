@@ -210,8 +210,8 @@ impl Voxel {
 /// Stores both a [`Voxel`] and its orientation.
 #[derive(Copy, Clone)]
 struct VoxelData {
-    voxel: Voxel,
-    orientation: Orientation
+    //voxel: Voxel,
+    //orientation: Orientation
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
@@ -267,24 +267,24 @@ impl Degree {
             }
         }
     }
-    fn rotate_x(self, mut vec: Vec3) -> Vec3 {
+    fn rotate_x(self, vec: Vec3) -> Vec3 {
         let rotated = self.rotate(vec.yz());
         Vec3::new(vec.x, rotated.x, rotated.y)
     }
-    fn rotate_y(self, mut vec: Vec3) -> Vec3 {
+    fn rotate_y(self, vec: Vec3) -> Vec3 {
         let rotated = self.rotate(vec.xz());
         Vec3::new(rotated.x, vec.y, rotated.y)
     }
-    fn rotate_z(self, mut vec: Vec3) -> Vec3 {
+    fn rotate_z(self, vec: Vec3) -> Vec3 {
         let rotated = self.rotate(vec.xy());
         Vec3::new(rotated.x, rotated.y, vec.z)
     }
     fn to_num(self) -> usize {
         match self {
-            Zero => 0,
-            Ninty => 1,
-            OneEighty => 2,
-            TwoSeventy => 3
+            Degree::Zero => 0,
+            Degree::Ninty => 1,
+            Degree::OneEighty => 2,
+            Degree::TwoSeventy => 3
         }
     }
     fn from_num(num: usize) -> Degree {
