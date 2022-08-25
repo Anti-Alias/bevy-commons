@@ -66,6 +66,7 @@ fn startup(
             PhysicsBundle {
                 current_transform: CurrentTransform(start_transform),
                 previous_transform: PreviousTransform(start_transform),
+                bounds: Bounds::new(Vec3::new(1.0, 1.0, 1.0)),
                 velocity: Velocity(Vec3::new(0.05, JUMP_SPEED, 0.025)),
                 ..default()
             }

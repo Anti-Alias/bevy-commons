@@ -1,5 +1,3 @@
-mod voxel;
-
 use std::ops::{Neg, Sub, Add};
 use std::time::Duration;
 
@@ -8,6 +6,9 @@ use bevy_ecs::prelude::*;
 use bevy_app::prelude::*;
 use bevy_math::prelude::*;
 use bevy_time::FixedTimestep;
+
+mod voxel;
+pub use voxel::*;
 
 const PHYSICS_TIMESTEP: &str = "PHYSICS_TIMESTEP";
 
@@ -119,6 +120,9 @@ pub struct Bounds {
     pub half_extents: Vec3
 }
 impl Bounds {
+    pub fn new(size: Vec3) -> Self {
+        Self { half_extents: size / 2.0 }
+    }
     pub fn size(&self) -> Vec3 {
         self.half_extents * 2.0
     }

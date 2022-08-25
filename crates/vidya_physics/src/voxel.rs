@@ -36,7 +36,7 @@ impl VoxelChunk {
 
     /// Gets voxel from this chunk.
     /// Returns None if out of bounds, or voxel was not present at the coordinates specified.
-    pub fn get_voxel(&self, coords: UVec3, chunk: &VoxelChunk) -> Option<&VoxelData> {
+    pub fn get_voxel(&self, coords: UVec3, _chunk: &VoxelChunk) -> Option<&VoxelData> {
         let idx = self.to_voxel_index(coords);
         self.voxels
             .get(idx)
@@ -245,7 +245,8 @@ mod degree_tests {
 mod orientation_tests {
 
     use bevy::prelude::*;
-    use crate::{ Orientation, Degree };
+
+    use crate::{Orientation, Degree};
 
     #[test]
     fn rotate() {
