@@ -1,6 +1,9 @@
 use std::ops::Mul;
 
-use bevy::prelude::*;
+
+use bevy_ecs::prelude::*;
+use bevy_math::{prelude::*, Vec3Swizzles};
+
 use super::*;
 
 //////////////////////////////////////////////// Voxel-related ////////////////////////////////////////////////

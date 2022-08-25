@@ -2,12 +2,12 @@ mod voxel;
 
 use std::ops::{Neg, Sub, Add};
 use std::time::Duration;
-use bevy::math::Vec3Swizzles;
-use bevy::prelude::*;
 
-use bevy::time::{FixedTimestep, FixedTimesteps};
-
-use voxel::*;
+use vidya_interp::{sync_transforms, CurrentTransform, PreviousTransform, InterpolationPlugin};
+use bevy_ecs::prelude::*;
+use bevy_app::prelude::*;
+use bevy_math::prelude::*;
+use bevy_time::FixedTimestep;
 
 const PHYSICS_TIMESTEP: &str = "PHYSICS_TIMESTEP";
 
@@ -27,35 +27,40 @@ impl Default for PhysicsPlugin {
 }
 impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
+
+        // Depends on interpolation plugin
+        app.add_plugin(InterpolationPlugin::<PhysicsMarker>::new(PHYSICS_TIMESTEP));
+
         let timestep = self.timestep_duration.as_secs_f64();
-        app
-            .add_system_to_stage(CoreStage::PostUpdate, sync_positions
-                .label(PhysicsSystems::SyncPositions)
+        let stage = SystemStage::parallel()
+            .with_system(sync_transforms::<PhysicsMarker>
+                .label(PhysicsSystems::SyncTransforms)
                 .with_run_criteria(FixedTimestep::step(timestep).with_label(PHYSICS_TIMESTEP))
             )
-            .add_system_to_stage(CoreStage::PostUpdate, apply_gravity
+            .with_system(apply_gravity
                 .label(PhysicsSystems::ApplyGravity)
                 .with_run_criteria(FixedTimestep::step(timestep))
             )
-            .add_system_to_stage(CoreStage::PostUpdate, apply_friction
+            .with_system(apply_friction
                 .label(PhysicsSystems::ApplyFriction)
                 .after(PhysicsSystems::ApplyGravity)
                 .with_run_criteria(FixedTimestep::step(timestep))
             )
-            .add_system_to_stage(CoreStage::PostUpdate, apply_velocity.label(PhysicsSystems::ApplyVelocity)
-                .after(PhysicsSystems::SyncPositions)
+            .with_system(apply_velocity.label(PhysicsSystems::ApplyVelocity)
+                .after(PhysicsSystems::SyncTransforms)
                 .after(PhysicsSystems::ApplyFriction)
                 .with_run_criteria(FixedTimestep::step(timestep))
             )
-            .add_system_to_stage(CoreStage::PostUpdate, apply_voxel_collisions
+            .with_system(apply_voxel_collisions
                 .label(PhysicsSystems::ApplyVoxelCollisions)
                 .after(PhysicsSystems::ApplyVelocity)
                 .with_run_criteria(FixedTimestep::step(timestep))
-            )
-            .add_system_to_stage(CoreStage::PostUpdate, lerp_transform
-                .label(PhysicsSystems::LerpTransform)
-                .after(PhysicsSystems::ApplyVoxelCollisions)
             );
+        app.add_stage_before(
+            CoreStage::PostUpdate,
+            PhysicsStage,
+            stage
+        );
     }
 }
 
@@ -67,7 +72,7 @@ struct PhysicsStage;
 #[derive(Debug, Copy, Clone, Eq, PartialEq, SystemLabel)]
 pub enum PhysicsSystems {
     /// Syncs previous position with current position
-    SyncPositions,
+    SyncTransforms,
     /// Applies friction to velocity
     ApplyFriction,
     /// Applies gravity to velocity
@@ -94,18 +99,6 @@ impl Default for Gravity {
 
 
 //////////////////////////////////////////////// Components ////////////////////////////////////////////////
-
-/// Transform state of an [`Entity`] in the current game tick
-#[derive(Component, Debug, PartialEq, Clone, Copy, Reflect)]
-pub struct CurrentTransform(pub Transform);
-
-/// Transform state of an [`Entity`] in the previous game tick
-#[derive(Component, Debug, PartialEq, Clone, Copy, Reflect)]
-pub struct PreviousTransform(pub Transform);
-
-/// Previous center of an [`Entity`] during the last tick.
-#[derive(Component, Debug, Copy, Clone, PartialEq, Default)]
-pub struct PreviousPosition(pub Vec3);
 
 /// Velocity of an [`Entity`].
 #[derive(Component, Debug, Copy, Clone, PartialEq, Default)]
@@ -147,18 +140,23 @@ impl Default for Friction {
     }
 }
 
+/// Marker component that lets the interpolation plugin select the correct entities
+#[derive(Component, Default, Debug, Copy, Clone, PartialEq)]
+pub struct PhysicsMarker;
+
 //////////////////////////////////////////////// Bundle(s) ////////////////////////////////////////////////
 
 /// Bundle of all the components needed for an [`Entity`]
 /// to partake in a physics simulation.
-#[derive(Bundle, Debug, Copy, Clone, PartialEq)]
+#[derive(Bundle, Default, Debug, Copy, Clone, PartialEq)]
 pub struct PhysicsBundle {
     pub current_transform: CurrentTransform,
-    pub previous_transform: PreviousPosition,
+    pub previous_transform: PreviousTransform,
     pub bounds: Bounds,
     pub shape: PhysicsShape,
     pub velocity: Velocity,
-    pub friction: Friction
+    pub friction: Friction,
+    pub physics_marker: PhysicsMarker
 }
 
 //////////////////////////////////////////////// Helper struct(s) ////////////////////////////////////////////////
@@ -225,13 +223,6 @@ impl AABB {
 
 //////////////////////////////////////////////// Systems ////////////////////////////////////////////////
 
-/// Synchronizes previous position with current position.
-fn sync_positions(mut entities: Query<(&mut CurrentTransform, &mut PreviousTransform)>) {
-    for (transform, mut prev_transform) in &mut entities {
-        prev_transform.0 = transform.0;
-    }
-}
-
 /// Applies gravity if there is a gravity resource.
 /// Should not run if gravity resource not present.
 fn apply_gravity(
@@ -264,18 +255,4 @@ fn apply_velocity(mut entities: Query<(&Velocity, &mut CurrentTransform)>) {
 /// Applies voxel collision code
 fn apply_voxel_collisions() {
     // TODO
-}
-
-/// Linearly interpolates transforms between [`PreviousPosition`] and [`Position`] components.
-fn lerp_transform(
-    timesteps: Res<FixedTimesteps>,
-    mut entities: Query<(&mut Transform, &PreviousPosition, &CurrentTransform)>
-) {
-    let t = timesteps
-        .get(PHYSICS_TIMESTEP)
-        .unwrap()
-        .overstep_percentage() as f32;
-    for (mut transform, prev_pos, pos) in &mut entities {
-        transform.translation = prev_pos.0.lerp(pos.0, t);
-    }
 }

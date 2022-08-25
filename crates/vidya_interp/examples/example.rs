@@ -18,14 +18,14 @@ fn main() {
 
         // Fixed timestep stage that runs once a second
         .add_stage_before(
-            CoreStage::PostUpdate,                              // Movement/syncing systems must run before PostUpdate, as that's when the InterpolationPlugin runs it's systems
+            CoreStage::PostUpdate,                                  // Movement/syncing systems must run before PostUpdate, as that's when the InterpolationPlugin runs it's systems
             MY_TIMESTEP,
             SystemStage::parallel()
                 .with_run_criteria(FixedTimestep::step(1.0).with_label(MY_TIMESTEP))
-                .with_system(sync_transforms.label("SYNC"))     // Syncs previous transform state with current
-                .with_system(move_ball.after("SYNC"))           // Updates current transform state after transforms have been synced
+                .with_system(sync_transforms::<Ball>.label("SYNC")) // Syncs previous transform state with current
+                .with_system(move_ball.after("SYNC"))               // Updates current transform state after transforms have been synced
         )
-        .add_plugin(InterpolationPlugin::new(MY_TIMESTEP))      // Plugin must know the name of the timestep to get correct interpolation value
+        .add_plugin(InterpolationPlugin::<Ball>::new(MY_TIMESTEP))  // Plugin must know the name of the timestep to get correct interpolation value
         .add_startup_system(startup)
         .run();
 }
@@ -58,6 +58,7 @@ fn startup(
             transform: Transform::from_xyz(0.0, 0.0, 0.0),
             ..default()
         })
+        .insert(Ball)
         .insert(PreviousTransform(SRC))
         .insert(CurrentTransform(DEST));
 

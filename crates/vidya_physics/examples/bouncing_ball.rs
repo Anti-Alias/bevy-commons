@@ -1,5 +1,6 @@
 use bevy::prelude::shape::{Plane, Icosphere};
-use plat_physics::*;
+use vidya_interp::{CurrentTransform, PreviousTransform};
+use vidya_physics::*;
 use bevy::prelude::*;
 
 // Marks ball entity
@@ -53,6 +54,7 @@ fn startup(
     });
 
     // Spawns ball
+    let start_transform = Transform::from_xyz(0.0, 0.5, 0.0);
     commands
         .spawn()
         .insert_bundle(PbrBundle {
@@ -61,12 +63,12 @@ fn startup(
             ..default()
         })
         .insert_bundle(
-            PhysicsBundle::new(
-                Vec3::new(0.0, 0.5, 0.0),
-                Vec3::new(1.0, 1.0, 1.0),
-                PhysicsShape::Cuboid
-            )
-            .with_velocity(Vec3::new(0.05, JUMP_SPEED, 0.025))
+            PhysicsBundle {
+                current_transform: CurrentTransform(start_transform),
+                previous_transform: PreviousTransform(start_transform),
+                velocity: Velocity(Vec3::new(0.05, JUMP_SPEED, 0.025)),
+                ..default()
+            }
         )
         .insert(Ball);
 
@@ -85,35 +87,36 @@ fn bounce_ball(mut entities: Query<
     ),
     With<Ball>>
 ) {
-    for (mut pos, bounds, mut vel) in &mut entities {
+    for (mut trans, bounds, mut vel) in &mut entities {
 
         // Bounces off floor
-        if pos.0.y - bounds.half_extents.y <= FLOOR {
-            pos.0.y = FLOOR + bounds.half_extents.y;
+        let trans = &mut trans.0.translation;
+        if trans.y - bounds.half_extents.y <= FLOOR {
+            trans.y = FLOOR + bounds.half_extents.y;
             vel.0.y = JUMP_SPEED;
         }
 
         // Bounces off left wall
-        if pos.0.x - bounds.half_extents.x <= LEFT_WALL {
-            pos.0.x = LEFT_WALL + bounds.half_extents.x;
+        if trans.x - bounds.half_extents.x <= LEFT_WALL {
+            trans.x = LEFT_WALL + bounds.half_extents.x;
             vel.0.x *= -1.0;
         }
 
         // Bounces off right wall
-        if pos.0.x + bounds.half_extents.x >= RIGHT_WALL {
-            pos.0.x = RIGHT_WALL - bounds.half_extents.x;
+        if trans.x + bounds.half_extents.x >= RIGHT_WALL {
+            trans.x = RIGHT_WALL - bounds.half_extents.x;
             vel.0.x *= -1.0;
         }
 
         // Bounces off near wall
-        if pos.0.z + bounds.half_extents.z >= NEAR_WALL {
-            pos.0.z = NEAR_WALL - bounds.half_extents.z;
+        if trans.z + bounds.half_extents.z >= NEAR_WALL {
+            trans.z = NEAR_WALL - bounds.half_extents.z;
             vel.0.z *= -1.0;
         }
 
         // Bounces off far wall
-        if pos.0.z - bounds.half_extents.z <= FAR_WALL {
-            pos.0.z = FAR_WALL + bounds.half_extents.z;
+        if trans.z - bounds.half_extents.z <= FAR_WALL {
+            trans.z = FAR_WALL + bounds.half_extents.z;
             vel.0.z *= -1.0;
         }
     }
