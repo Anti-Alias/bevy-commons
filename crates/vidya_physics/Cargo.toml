@@ -1,0 +1,8 @@
+[package]
+name = "vidya_physics"
+version = "0.1.0"
+edition = "2021"
+description = "A simple platformer-orient physics engine for the Bevy game engine."
+
+[dependencies]
+bevy = { version = "0.8.0", features = ["dynamic"] }

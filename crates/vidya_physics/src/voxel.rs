@@ -1,93 +1,70 @@
+use std::ops::Mul;
+
 use bevy::prelude::*;
 use super::*;
 
+//////////////////////////////////////////////// Voxel-related ////////////////////////////////////////////////
+
 /// A collider stored in a [`VoxelChunk`].
-#[derive(Copy, Clone)]
-pub struct Voxel {
-    pub collision_fn: fn(&Bounds, &Movement)
-}
-impl Voxel {
-    pub fn cuboid() -> Self {
-        Self {
-            collision_fn: cuboid_collision
-        }
-    }
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum Voxel {
+    Cuboid
 }
 
 /// Stores both a [`Voxel`] and its orientation.
 #[derive(Copy, Clone)]
-struct VoxelData {
-    voxel: Voxel,
-    orientation: Orientation
+pub struct VoxelData {
+    pub voxel: Voxel,
+    pub orientation: Orientation
 }
 
-/// Represents a chunk of [`Voxel`]s.
-/// Metadata about each chunk spawned i in [`VoxelChunks`].
+/// Represents a chunk of [`Voxel`]s stored in an [`Entity`].
 #[derive(Component)]
-pub struct VoxelChunk(Vec<Option<VoxelData>>);
-
-/// Resource that keeps track of entities with [`VoxelChunk`]s.
-pub struct VoxelChunks {
+pub struct VoxelChunk {
     size: UVec3,
-    voxel_size: Vec3
+    voxels: Vec<Option<VoxelData>>
 }
-impl VoxelChunks {
-    // Creates a new terrain chunk, allocating empty voxels.
-    pub fn new(size: UVec3, voxel_size: Vec3) -> Self {
-        if voxel_size.x < 0.0 || voxel_size.y < 0.0 || voxel_size.z < 0.0 {
-            panic!("Invalid collider size: {}", voxel_size);
-        }
-        Self {
-            size,
-            voxel_size
-        }
-    }
+impl VoxelChunk {
 
-    /// Size of each voxel in units.
-    pub fn voxel_size(&self) -> Vec3 {
-        self.voxel_size
-    }
-
-    /// Size of chunk in voxels.
+    /// Size of the chunk measured in voxels
     pub fn size(&self) -> UVec3 {
         self.size
     }
 
-    /// Size of chunk in units.
-    pub fn unit_size(&self) -> Vec3 {
-        self.size.as_vec3() * self.voxel_size
+    /// Gets voxel from this chunk.
+    /// Returns None if out of bounds, or voxel was not present at the coordinates specified.
+    pub fn get_voxel(&self, coords: UVec3, chunk: &VoxelChunk) -> Option<&VoxelData> {
+        let idx = self.to_voxel_index(coords);
+        self.voxels
+            .get(idx)
+            .and_then(|vox_opt| vox_opt.as_ref())
     }
 
-    // /// Gets voxel from this chunk.
-    // /// Returns None if out of bounds, or voxel was not present at the coordinates specified.
-    // pub fn get_voxel(&self, coords: UVec3, chunk: &VoxelChunk) -> Option<&Voxel> {
-    //     let idx = self.to_voxel_index(coords);
-    //     self.voxels
-    //         .get(idx)
-    //         .and_then(|vox_opt| vox_opt.as_ref())
-    // }
+    /// Gets mutable voxel from this chunk.
+    /// Returns None if out of bounds, or voxel was not present at the coordinates specified.
+    pub fn get_voxel_mut(&mut self, coords: UVec3) -> Option<&mut VoxelData> {
+        let idx = self.to_voxel_index(coords);
+        self.voxels
+            .get_mut(idx)
+            .and_then(|vox_opt| vox_opt.as_mut())
+    }
 
-    // /// Gets mutable voxel from this chunk.
-    // /// Returns None if out of bounds, or voxel was not present at the coordinates specified.
-    // pub fn get_voxel_mut(&mut self, coords: UVec3) -> Option<&mut Voxel> {
-    //     let idx = self.to_voxel_index(coords);
-    //     self.voxels
-    //         .get_mut(idx)
-    //         .and_then(|vox_opt| vox_opt.as_mut())
-    // }
-
-    // /// Converts coordinates to voxel index
-    // fn to_voxel_index(&self, coords: UVec3) -> usize {
-    //     let x = coords.x;
-    //     let y = coords.y;
-    //     let z = coords.z;
-    //     let w = self.size.x;
-    //     let h = self.size.y;
-    //     let index = x + y*w + z*(w + h);
-    //     index as usize
-    // }
+    /// Converts coordinates to voxel index
+    fn to_voxel_index(&self, coords: UVec3) -> usize {
+        let x = coords.x;
+        let y = coords.y;
+        let z = coords.z;
+        let w = self.size.x;
+        let h = self.size.y;
+        let index = x + y*w + z*(w + h);
+        index as usize
+    }
 }
 
+
+//////////////////////////////////////////////// Helper structs ////////////////////////////////////////////////
+
+/// Similar to a euler rotation in the order of XYZ, except constrained to 90 degree angles
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub struct Orientation {
     /// Rotation along x axis
@@ -98,18 +75,38 @@ pub struct Orientation {
     pub z_rot: Degree
 }
 impl Orientation {
-    pub fn relative_to(&self, other: Orientation) -> Orientation {
+    pub fn new(x_rot: Degree, y_rot: Degree, z_rot: Degree) -> Self {
+        Self { x_rot, y_rot, z_rot }
+    }
+}
+impl Add for Orientation {
+    type Output = Self;
+    fn add(self, rhs: Self) -> Self {
         Orientation {
-            x_rot: self.x_rot - other.x_rot,
-            y_rot: self.y_rot - other.y_rot,
-            z_rot: self.z_rot - other.z_rot
+            x_rot: self.x_rot + rhs.x_rot,
+            y_rot: self.y_rot + rhs.y_rot,
+            z_rot: self.z_rot + rhs.z_rot,
         }
     }
-    pub fn rotate_vec(&self, mut vec: Vec3) -> Vec3 {
-        vec = self.z_rot.rotate_z(vec);
-        vec = self.y_rot.rotate_y(vec);
-        vec = self.x_rot.rotate_x(vec);
-        vec
+}
+impl Sub for Orientation {
+    type Output = Self;
+    fn sub(self, rhs: Self) -> Self {
+        Orientation {
+            x_rot: self.x_rot - rhs.x_rot,
+            y_rot: self.y_rot - rhs.y_rot,
+            z_rot: self.z_rot - rhs.z_rot,
+        }
+    }
+}
+impl Mul<Vec3> for Orientation {
+    type Output = Vec3;
+    fn mul(self, rhs: Vec3) -> Self::Output {
+        let mut result = rhs;
+        result = self.z_rot.rotate_z(result);
+        result = self.y_rot.rotate_y(result);
+        result = self.x_rot.rotate_x(result);
+        result
     }
 }
 
@@ -142,16 +139,19 @@ impl Degree {
         }
     }
 
+    /// Rotates a vec around the x axis
     pub fn rotate_x(self, vec: Vec3) -> Vec3 {
         let rotated = self.rotate(vec.yz());
         Vec3::new(vec.x, rotated.x, rotated.y)
     }
 
+    /// Rotates a vec around the y axis
     pub fn rotate_y(self, vec: Vec3) -> Vec3 {
         let rotated = self.rotate(vec.xz());
         Vec3::new(rotated.x, vec.y, rotated.y)
     }
 
+    /// Rotates a vec around the z axis
     pub fn rotate_z(self, vec: Vec3) -> Vec3 {
         let rotated = self.rotate(vec.xy());
         Vec3::new(rotated.x, rotated.y, vec.z)
@@ -173,7 +173,7 @@ impl Degree {
             1 => Degree::Ninty,
             2 => Degree::OneEighty,
             3 => Degree::TwoSeventy,
-            _ => panic!("Invalid number {}", num)
+            _ => panic!("This error is impossible")
         }
     }
 }
@@ -199,10 +199,6 @@ impl Neg for Degree {
             Self::TwoSeventy => Self::Ninty
         }
     }
-}
-
-pub(crate) fn cuboid_collision(_voxel_bounds: &Bounds, _movement: &Movement) {
-
 }
 
 
@@ -239,5 +235,27 @@ mod degree_tests {
         assert_eq!(Degree::TwoSeventy, Degree::OneEighty + Degree::Ninty);
         assert_eq!(Degree::Ninty, Degree::TwoSeventy + Degree::OneEighty);
         assert_eq!(Degree::Ninty, Degree::TwoSeventy - Degree::OneEighty);
+    }
+}
+
+#[cfg(test)]
+mod orientation_tests {
+
+    use bevy::prelude::*;
+    use crate::{ Orientation, Degree };
+
+    #[test]
+    fn rotate() {
+        let orientation = Orientation::new(Degree::Zero, Degree::Ninty, Degree::Ninty);
+        assert_eq!(
+            Vec3::new(0.0, 1.0, 0.0),
+            orientation * Vec3::new(1.0, 0.0, 0.0)
+        );
+
+        let orientation = Orientation::new(Degree::Zero, Degree::Zero, Degree::Ninty);
+        assert_eq!(
+            Vec3::new(-1.0, 0.0, 0.0),
+            orientation * Vec3::new(0.0, 1.0, 0.0)
+        );
     }
 }

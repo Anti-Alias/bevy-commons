@@ -79,7 +79,7 @@ fn startup(
 
 fn bounce_ball(mut entities: Query<
     (
-        &mut Position,
+        &mut CurrentTransform,
         &Bounds,
         &mut Velocity
     ),

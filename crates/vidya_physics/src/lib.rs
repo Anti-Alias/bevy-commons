@@ -95,9 +95,13 @@ impl Default for Gravity {
 
 //////////////////////////////////////////////// Components ////////////////////////////////////////////////
 
-/// Center of an [`Entity`] in 3D space.
-#[derive(Component, Debug, Copy, Clone, PartialEq, Default)]
-pub struct Position(pub Vec3);
+/// Transform state of an [`Entity`] in the current game tick
+#[derive(Component, Debug, PartialEq, Clone, Copy, Reflect)]
+pub struct CurrentTransform(pub Transform);
+
+/// Transform state of an [`Entity`] in the previous game tick
+#[derive(Component, Debug, PartialEq, Clone, Copy, Reflect)]
+pub struct PreviousTransform(pub Transform);
 
 /// Previous center of an [`Entity`] during the last tick.
 #[derive(Component, Debug, Copy, Clone, PartialEq, Default)]
@@ -115,7 +119,7 @@ pub enum PhysicsShape {
     Capsule
 }
 
-/// Together, with [`Position`] as the center, this component represents the axis-aligned bounding box of an [`Entity`].
+/// Represents the bounds of an unscaled [`Entity`].
 #[derive(Component, Debug, Copy, Clone, PartialEq, Default)]
 pub struct Bounds {
     /// Size of half the width, half the height and half the depth of the AABB.
@@ -149,37 +153,12 @@ impl Default for Friction {
 /// to partake in a physics simulation.
 #[derive(Bundle, Debug, Copy, Clone, PartialEq)]
 pub struct PhysicsBundle {
-    pub position: Position,
-    pub previous_position: PreviousPosition,
-    pub aabb: Bounds,
+    pub current_transform: CurrentTransform,
+    pub previous_transform: PreviousPosition,
+    pub bounds: Bounds,
     pub shape: PhysicsShape,
     pub velocity: Velocity,
     pub friction: Friction
-}
-impl PhysicsBundle {
-    /// Creates a new physics bundle
-    pub fn new(
-        position: Vec3,
-        size: Vec3,
-        shape: PhysicsShape
-    ) -> Self {
-        Self {
-            position: Position(position),
-            previous_position: PreviousPosition(position),
-            aabb: Bounds { half_extents: size / 2.0 },
-            shape,
-            velocity: Velocity(Vec3::ZERO),
-            friction: Friction(Vec3::ONE)
-        }
-    }
-    pub fn with_friction(mut self, friction: Vec3) -> Self {
-        self.friction = Friction(friction);
-        self
-    }
-    pub fn with_velocity(mut self, velocity: Vec3) -> Self {
-        self.velocity = Velocity(velocity);
-        self
-    }
 }
 
 //////////////////////////////////////////////// Helper struct(s) ////////////////////////////////////////////////
@@ -247,9 +226,9 @@ impl AABB {
 //////////////////////////////////////////////// Systems ////////////////////////////////////////////////
 
 /// Synchronizes previous position with current position.
-fn sync_positions(mut entities: Query<(&mut Position, &mut PreviousPosition)>) {
-    for (pos, mut prev_pos) in &mut entities {
-        prev_pos.0 = pos.0;
+fn sync_positions(mut entities: Query<(&mut CurrentTransform, &mut PreviousTransform)>) {
+    for (transform, mut prev_transform) in &mut entities {
+        prev_transform.0 = transform.0;
     }
 }
 
@@ -276,9 +255,9 @@ fn apply_friction(mut entities: Query<(&mut Velocity, &Friction)>) {
 }
 
 /// Moves entities by velocities.
-fn apply_velocity(mut entities: Query<(&Velocity, &mut Position)>) {
-    for (vel, mut pos) in &mut entities {
-        pos.0 += vel.0;
+fn apply_velocity(mut entities: Query<(&Velocity, &mut CurrentTransform)>) {
+    for (vel, mut transform) in &mut entities {
+        transform.0.translation += vel.0;
     }
 }
 
@@ -290,7 +269,7 @@ fn apply_voxel_collisions() {
 /// Linearly interpolates transforms between [`PreviousPosition`] and [`Position`] components.
 fn lerp_transform(
     timesteps: Res<FixedTimesteps>,
-    mut entities: Query<(&mut Transform, &PreviousPosition, &Position)>
+    mut entities: Query<(&mut Transform, &PreviousPosition, &CurrentTransform)>
 ) {
     let t = timesteps
         .get(PHYSICS_TIMESTEP)
