@@ -43,6 +43,7 @@ pub struct VoxelChunk {
 }
 impl VoxelChunk {
 
+    /// Allocates an empty voxel chunk.
     pub fn new(size: UVec3) -> Self {
         Self {
             size,
@@ -55,19 +56,10 @@ impl VoxelChunk {
         self.size
     }
 
-    /// Sets the value of a voxel and returns self.
-    /// Helpful when setting multiple voxels at once.
-    pub fn set_voxel(&mut self, coords: UVec3, voxel_data: VoxelData) -> &mut Self {
-        let idx = self.to_voxel_index(coords);
-        let current_voxel = self.voxels.get_mut(idx).expect("Voxel coordinates out of bounds");
-        *current_voxel = voxel_data;
-        self
-    }
-
     /// Gets voxel from this chunk.
     /// Returns None if out of bounds.
     pub fn get_voxel(&self, coords: UVec3) -> Option<&VoxelData> {
-        if coords.x >= self.size.x || coords.y >= self.size.y || coords.z >= self.size.z {
+        if !self.in_bounds(coords) {
             return None;
         }
         let idx = self.to_voxel_index(coords);
@@ -77,8 +69,27 @@ impl VoxelChunk {
     /// Gets mutable voxel from this chunk.
     /// Returns None if out of bounds.
     pub fn get_voxel_mut(&mut self, coords: UVec3) -> Option<&mut VoxelData> {
+        if !self.in_bounds(coords) {
+            return None;
+        }
         let idx = self.to_voxel_index(coords);
         self.voxels.get_mut(idx)
+    }
+
+    /// Sets the value of a voxel and returns self.
+    /// Helpful when setting multiple voxels at once.
+    pub fn set_voxel(&mut self, coords: UVec3, voxel_data: VoxelData) -> &mut Self {
+        let idx = self.to_voxel_index(coords);
+        if !self.in_bounds(coords) {
+            panic!("Coordiantes out of bounds");
+        }
+        let current_voxel = self.voxels.get_mut(idx).expect("Voxel coordinates out of bounds");
+        *current_voxel = voxel_data;
+        self
+    }
+
+    fn in_bounds(&self, coords: UVec3) -> bool {
+        coords.x < self.size.x && coords.y < self.size.y && coords.z < self.size.z
     }
 
     /// Converts coordinates to voxel index
