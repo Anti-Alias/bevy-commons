@@ -31,22 +31,20 @@ impl Default for PhysicsPlugin {
 impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
 
-        // Depends on interpolation plugin
+        // Add interpolation for entities marked with PhysicsMarker.
+        // This will allow for smooth movements independent of refresh rate, in spite of the engine using a fixed timestep.
         app.add_plugin(InterpolationPlugin::<PhysicsMarker>::new(PHYSICS_TIMESTEP));
-
         let timestep = self.timestep_duration.as_secs_f64();
 
+        // Runs physics systems before interpolation
         app.add_system_set_to_stage(CoreStage::PostUpdate, SystemSet::new()
             .before(InterpolationSystems::Interpolate)
-            .with_run_criteria(FixedTimestep::step(1.0/10.0).with_label(PHYSICS_TIMESTEP))
+            .with_run_criteria(FixedTimestep::step(timestep).with_label(PHYSICS_TIMESTEP))
             .with_system(sync_transforms::<PhysicsMarker>
                 .label(PhysicsSystems::SyncTransforms)
             )
             .with_system(sync_transforms::<PhysicsMarker>
                 .label(PhysicsSystems::SyncTransforms)
-            )
-            .with_system(apply_gravity
-                .label(PhysicsSystems::ApplyGravity)
             )
             .with_system(apply_gravity
                 .label(PhysicsSystems::ApplyGravity)
