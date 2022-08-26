@@ -9,47 +9,76 @@ use super::*;
 //////////////////////////////////////////////// Voxel-related ////////////////////////////////////////////////
 
 /// A collider stored in a [`VoxelChunk`].
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Default, Copy, Clone, Eq, PartialEq)]
 pub enum Voxel {
-    Cuboid
+    /// No voxel
+    #[default]
+    Empty,
+    /// Cuboid shaped voxel
+    Cuboid,
+    /// Slope shaped voxel. Default orientation has the slope's normal facing (0, 1, 1).
+    Slope
 }
 
 /// Stores both a [`Voxel`] and its orientation.
-#[derive(Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, Eq, PartialEq)]
 pub struct VoxelData {
     pub voxel: Voxel,
     pub orientation: Orientation
+}
+impl VoxelData {
+    pub fn new(voxel: Voxel) -> Self {
+        Self {
+            voxel,
+            orientation: Orientation::default()
+        }
+    }
 }
 
 /// Represents a chunk of [`Voxel`]s stored in an [`Entity`].
 #[derive(Component)]
 pub struct VoxelChunk {
     size: UVec3,
-    voxels: Vec<Option<VoxelData>>
+    voxels: Vec<VoxelData>
 }
 impl VoxelChunk {
+
+    pub fn new(size: UVec3) -> Self {
+        Self {
+            size,
+            voxels: vec![VoxelData::default(); (size.x * size.y * size.z) as usize]
+        }
+    }
 
     /// Size of the chunk measured in voxels
     pub fn size(&self) -> UVec3 {
         self.size
     }
 
-    /// Gets voxel from this chunk.
-    /// Returns None if out of bounds, or voxel was not present at the coordinates specified.
-    pub fn get_voxel(&self, coords: UVec3, _chunk: &VoxelChunk) -> Option<&VoxelData> {
+    /// Sets the value of a voxel and returns self.
+    /// Helpful when setting multiple voxels at once.
+    pub fn set_voxel(&mut self, coords: UVec3, voxel_data: VoxelData) -> &mut Self {
         let idx = self.to_voxel_index(coords);
-        self.voxels
-            .get(idx)
-            .and_then(|vox_opt| vox_opt.as_ref())
+        let current_voxel = self.voxels.get_mut(idx).expect("Voxel coordinates out of bounds");
+        *current_voxel = voxel_data;
+        self
+    }
+
+    /// Gets voxel from this chunk.
+    /// Returns None if out of bounds.
+    pub fn get_voxel(&self, coords: UVec3) -> Option<&VoxelData> {
+        if coords.x >= self.size.x || coords.y >= self.size.y || coords.z >= self.size.z {
+            return None;
+        }
+        let idx = self.to_voxel_index(coords);
+        self.voxels.get(idx)
     }
 
     /// Gets mutable voxel from this chunk.
-    /// Returns None if out of bounds, or voxel was not present at the coordinates specified.
+    /// Returns None if out of bounds.
     pub fn get_voxel_mut(&mut self, coords: UVec3) -> Option<&mut VoxelData> {
         let idx = self.to_voxel_index(coords);
-        self.voxels
-            .get_mut(idx)
-            .and_then(|vox_opt| vox_opt.as_mut())
+        self.voxels.get_mut(idx)
     }
 
     /// Converts coordinates to voxel index
@@ -64,11 +93,34 @@ impl VoxelChunk {
     }
 }
 
+/// Bundle of all the components needed for voxel chunk [`Entity`] to partake in a physics simulation
+#[derive(Bundle)]
+pub struct VoxelChunkBundle {
+    pub voxel_chunk: VoxelChunk,
+    pub current_transform: CurrentTransform,
+    pub previous_transform: PreviousTransform,
+    pub bounds: Bounds,
+    pub velocity: Velocity,
+    pub physics_marker: PhysicsMarker
+}
+impl VoxelChunkBundle {
+    pub fn new(voxel_chunk: VoxelChunk, transform: Transform, bounds: Bounds) -> Self {
+        Self {
+            voxel_chunk,
+            current_transform: CurrentTransform(transform),
+            previous_transform: PreviousTransform(transform),
+            bounds,
+            velocity: Velocity::default(),
+            physics_marker: PhysicsMarker
+        }
+    }
+}
+
 
 //////////////////////////////////////////////// Helper structs ////////////////////////////////////////////////
 
 /// Similar to a euler rotation in the order of XYZ, except constrained to 90 degree angles
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Default, Copy, Clone, Eq, PartialEq, Hash)]
 pub struct Orientation {
     /// Rotation along x axis
     pub x_rot: Degree,
@@ -261,5 +313,45 @@ mod orientation_tests {
             Vec3::new(-1.0, 0.0, 0.0),
             orientation * Vec3::new(0.0, 1.0, 0.0)
         );
+    }
+}
+
+#[cfg(test)]
+mod voxel_chunk_tests {
+
+    use bevy_math::UVec3;
+
+    use crate::{ Voxel, VoxelChunk, VoxelData };
+
+    #[test]
+    fn build() {
+        // Builds chunk
+        let mut chunk = VoxelChunk::new(UVec3::new(16, 16, 16));
+        chunk
+            .set_voxel(UVec3::new(0, 0, 0), VoxelData::new(Voxel::Cuboid))
+            .set_voxel(UVec3::new(1, 0, 0), VoxelData::new(Voxel::Slope))
+            .set_voxel(UVec3::new(0, 1, 0), VoxelData::new(Voxel::Cuboid))
+            .set_voxel(UVec3::new(0, 0, 1), VoxelData::new(Voxel::Slope))
+            .set_voxel(UVec3::new(5, 6, 7), VoxelData::new(Voxel::Cuboid))
+            .set_voxel(UVec3::new(15, 15, 15), VoxelData::new(Voxel::Slope));
+
+        // Sets voxel using manual api
+        let voxel = chunk.get_voxel_mut(UVec3::new(8, 8, 8)).unwrap();
+        *voxel = VoxelData::new(Voxel::Cuboid);
+
+        // Validates that chunk values are the same
+        assert_eq!(Some(&VoxelData::new(Voxel::Cuboid)), chunk.get_voxel(UVec3::new(0, 0, 0)));
+        assert_eq!(Some(&VoxelData::new(Voxel::Slope)), chunk.get_voxel(UVec3::new(1, 0, 0)));
+        assert_eq!(Some(&VoxelData::new(Voxel::Cuboid)), chunk.get_voxel(UVec3::new(0, 1, 0)));
+        assert_eq!(Some(&VoxelData::new(Voxel::Slope)), chunk.get_voxel(UVec3::new(0, 0, 1)));
+        assert_eq!(Some(&VoxelData::new(Voxel::Cuboid)), chunk.get_voxel(UVec3::new(5, 6, 7)));
+        assert_eq!(Some(&VoxelData::new(Voxel::Slope)), chunk.get_voxel(UVec3::new(15, 15, 15)));
+        assert_eq!(Some(&VoxelData::new(Voxel::Cuboid)), chunk.get_voxel(UVec3::new(8, 8, 8)));
+
+        // Checks out-of-bounds returns None
+        assert_eq!(None, chunk.get_voxel(UVec3::new(16, 0, 0)));
+        assert_eq!(None, chunk.get_voxel(UVec3::new(0, 16, 0)));
+        assert_eq!(None, chunk.get_voxel(UVec3::new(0, 0, 16)));
+        assert_eq!(None, chunk.get_voxel(UVec3::new(1337, 1337, 1337)));
     }
 }

@@ -2,6 +2,7 @@ use std::ops::{Neg, Sub, Add};
 use std::time::Duration;
 
 use vidya_interp::{sync_transforms, CurrentTransform, PreviousTransform, InterpolationPlugin};
+use bevy_transform::prelude::Transform;
 use bevy_ecs::prelude::*;
 use bevy_app::prelude::*;
 use bevy_math::prelude::*;
@@ -14,8 +15,7 @@ const PHYSICS_TIMESTEP: &str = "PHYSICS_TIMESTEP";
 
 
 /// Adds a simple platformer voxel-based physics engine.
-/// All systems are added to the [`CoreStage::PostUpdate`] stage, so the setting of positions, velocities, etc
-/// should be done in [`CoreStage::Update`] or prior for optimal results.
+/// Runs sytems in  the [`PhysicsStage`], which runs between [`CoreStage::Update`] and [`CoreStage::PostUpdate`].
 pub struct PhysicsPlugin {
     pub timestep_duration: Duration
 }
@@ -106,7 +106,7 @@ impl Default for Gravity {
 pub struct Velocity(pub Vec3);
 
 /// Represents the shape of an [`Entity`].
-#[derive(Component, Debug, Copy, Clone, PartialEq, Default)]
+#[derive(Component, Debug, Clone, PartialEq, Default)]
 pub enum PhysicsShape {
     #[default]
     Cuboid,
@@ -144,15 +144,16 @@ impl Default for Friction {
     }
 }
 
-/// Marker component that lets the interpolation plugin select the correct entities
+/// Marker component that lets the interpolation plugin select the correct entities.
+/// If an [`Entity`] has this, users of that entity should not manipulate [`Transform`]
+/// directly and should instead manipulate [`CurrentTransform`] (and sometimes [`PreviousTransform`]).
 #[derive(Component, Default, Debug, Copy, Clone, PartialEq)]
 pub struct PhysicsMarker;
 
 //////////////////////////////////////////////// Bundle(s) ////////////////////////////////////////////////
 
-/// Bundle of all the components needed for an [`Entity`]
-/// to partake in a physics simulation.
-#[derive(Bundle, Default, Debug, Copy, Clone, PartialEq)]
+/// Bundle of all the components needed for an [`Entity`] to partake in a physics simulation
+#[derive(Bundle, Default, Debug, Clone, PartialEq)]
 pub struct PhysicsBundle {
     pub current_transform: CurrentTransform,
     pub previous_transform: PreviousTransform,
@@ -162,16 +163,35 @@ pub struct PhysicsBundle {
     pub friction: Friction,
     pub physics_marker: PhysicsMarker
 }
+impl PhysicsBundle {
+    pub fn new(transform: Transform, bounds: Bounds, shape: PhysicsShape) -> Self {
+        Self {
+            current_transform: CurrentTransform(transform),
+            previous_transform: PreviousTransform(transform),
+            bounds,
+            shape,
+            ..Self::default()
+        }
+    }
+    pub fn with_velocity(mut self, velocity: Velocity) -> Self {
+        self.velocity = velocity;
+        self
+    }
+    pub fn with_friction(mut self, friction: Friction) -> Self {
+        self.friction = friction;
+        self
+    }
+}
 
 //////////////////////////////////////////////// Helper struct(s) ////////////////////////////////////////////////
 
 /// Represents the movement of an [`Entity`] through 3D space.
-#[derive(Debug, Copy, Clone, PartialEq)]
-pub struct Movement {
+#[derive(Debug, Clone, PartialEq)]
+pub struct Movement<'a> {
     /// Bounding box of the moving object
     pub aabb: AABB,
     /// Shape of the body
-    pub shape: PhysicsShape,
+    pub shape: &'a PhysicsShape,
     /// Velocity of the object
     pub vel: Vec3,
 }

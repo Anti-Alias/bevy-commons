@@ -8,11 +8,15 @@ use bevy_ecs::prelude::*;
 
 /// Plugin that interpolates [`Transform`] components between
 /// [`PreviousTransform`] and [`CurrentTransform`] components during the [`CoreStage::PostUpdate`] stage.
+/// It is the reponsibility of the user of this plugin to properly set those components during the fixed update.
+/// The user should also ensure that their fixed timestep runs prior to the [`CoreStage::PostUpdate`] stage for
+/// maximum responsiveness.
 pub struct InterpolationPlugin<M: Component> {
     timestep_label: String,
     phantom: PhantomData<M>
 }
 impl<M: Component> InterpolationPlugin<M> {
+    /// Creates plugin that listens for updates during the specified labelled timestep
     pub fn new(timestep_label: impl Into<String>) -> Self {
         Self {
             timestep_label: timestep_label.into(),
@@ -45,12 +49,10 @@ fn interpolate<M: Component>(
     timesteps: Res<FixedTimesteps>,
     mut query: Query<(&PreviousTransform, &CurrentTransform, &mut Transform), With<M>>
 ) {
-    // Gets interpolation value from specified timestep
     let t = timesteps
         .get(&label.0)
         .expect("Missing timestep")
         .overstep_percentage() as f32;
-
     for (prev, current, mut trans) in &mut query {
         trans.translation = prev.0.translation.lerp(current.0.translation, t);
         trans.scale = prev.0.scale.lerp(current.0.scale, t);
@@ -58,7 +60,7 @@ fn interpolate<M: Component>(
     }
 }
 
-/// Reusable system that syncs the previous transform state with the current    .
+/// Reusable system that syncs the previous transform state with the current.
 /// Should run before updating [`CurrentTransform`].
 pub fn sync_transforms<M: Component>(mut query: Query<(&mut PreviousTransform, &CurrentTransform), With<M>>) {
     for (mut prev, current) in &mut query {
