@@ -36,7 +36,7 @@ impl VoxelData {
 }
 
 /// Represents a chunk of [`Voxel`]s stored in an [`Entity`].
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub struct VoxelChunk {
     size: UVec3,
     voxels: Vec<VoxelData>

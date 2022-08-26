@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use bevy_app::{ App, Plugin, CoreStage };
 use bevy_time::FixedTimesteps;
-use bevy_transform::prelude::*;
+use bevy_transform::{prelude::*, TransformSystem};
 use bevy_ecs::prelude::*;
 
 
@@ -27,13 +27,28 @@ impl<M: Component> InterpolationPlugin<M> {
 impl<M: Component> Plugin for InterpolationPlugin<M> {
     fn build(&self, app: &mut App) {
         app
-            .insert_resource(InterpolationLabel(self.timestep_label.clone()))
-            .add_system_to_stage(CoreStage::PostUpdate, interpolate::<M>);
+            .insert_resource(InterpolationLabel {
+                value: self.timestep_label.clone(),
+                phantom: PhantomData::<M>
+            })
+            .add_system_to_stage(CoreStage::PostUpdate,
+                interpolate::<M>
+                    .label(InterpolationSystems::Interpolate)
+                    .before(TransformSystem::TransformPropagate)    // Interpolating transforms should happen before being propagated to GlobalTransform to prevent a 1-frame delay
+            );
     }
 }
 
+#[derive(SystemLabel, Debug, Copy, Clone, Eq, PartialEq, Hash)]
+pub enum InterpolationSystems {
+    Interpolate
+}
+
 /// Resource that stores the label of the timestep we wish to interpolate across
-struct InterpolationLabel(String);
+struct InterpolationLabel<M: Component> {
+    value: String,
+    phantom: PhantomData<M>
+}
 
 /// Transform of [`Entity`] during current game tick
 #[derive(Component, Default, Debug, PartialEq, Clone, Copy)]
@@ -45,12 +60,12 @@ pub struct PreviousTransform(pub Transform);
 
 /// Interpolates [`Transform`] components between [`PreviousTransform`] and [`CurrentTransform`]1
 fn interpolate<M: Component>(
-    label: Res<InterpolationLabel>,
+    label: Res<InterpolationLabel<M>>,
     timesteps: Res<FixedTimesteps>,
     mut query: Query<(&PreviousTransform, &CurrentTransform, &mut Transform), With<M>>
 ) {
     let t = timesteps
-        .get(&label.0)
+        .get(&label.value)
         .expect("Missing timestep")
         .overstep_percentage() as f32;
     for (prev, current, mut trans) in &mut query {

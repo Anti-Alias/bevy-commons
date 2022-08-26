@@ -1,7 +1,7 @@
 use std::ops::{Neg, Sub, Add};
 use std::time::Duration;
 
-use vidya_interp::{sync_transforms, CurrentTransform, PreviousTransform, InterpolationPlugin};
+use vidya_interp::{sync_transforms, CurrentTransform, PreviousTransform, InterpolationPlugin, InterpolationSystems};
 use bevy_transform::prelude::Transform;
 use bevy_ecs::prelude::*;
 use bevy_app::prelude::*;
@@ -9,7 +9,9 @@ use bevy_math::prelude::*;
 use bevy_time::FixedTimestep;
 
 mod voxel;
+mod debug;
 pub use voxel::*;
+pub use debug::*;
 
 const PHYSICS_TIMESTEP: &str = "PHYSICS_TIMESTEP";
 
@@ -33,34 +35,34 @@ impl Plugin for PhysicsPlugin {
         app.add_plugin(InterpolationPlugin::<PhysicsMarker>::new(PHYSICS_TIMESTEP));
 
         let timestep = self.timestep_duration.as_secs_f64();
-        let stage = SystemStage::parallel()
+
+        app.add_system_set_to_stage(CoreStage::PostUpdate, SystemSet::new()
+            .before(InterpolationSystems::Interpolate)
+            .with_run_criteria(FixedTimestep::step(1.0/10.0).with_label(PHYSICS_TIMESTEP))
             .with_system(sync_transforms::<PhysicsMarker>
                 .label(PhysicsSystems::SyncTransforms)
-                .with_run_criteria(FixedTimestep::step(timestep).with_label(PHYSICS_TIMESTEP))
+            )
+            .with_system(sync_transforms::<PhysicsMarker>
+                .label(PhysicsSystems::SyncTransforms)
             )
             .with_system(apply_gravity
                 .label(PhysicsSystems::ApplyGravity)
-                .with_run_criteria(FixedTimestep::step(timestep))
+            )
+            .with_system(apply_gravity
+                .label(PhysicsSystems::ApplyGravity)
             )
             .with_system(apply_friction
                 .label(PhysicsSystems::ApplyFriction)
                 .after(PhysicsSystems::ApplyGravity)
-                .with_run_criteria(FixedTimestep::step(timestep))
             )
             .with_system(apply_velocity.label(PhysicsSystems::ApplyVelocity)
                 .after(PhysicsSystems::SyncTransforms)
                 .after(PhysicsSystems::ApplyFriction)
-                .with_run_criteria(FixedTimestep::step(timestep))
             )
             .with_system(apply_voxel_collisions
                 .label(PhysicsSystems::ApplyVoxelCollisions)
                 .after(PhysicsSystems::ApplyVelocity)
-                .with_run_criteria(FixedTimestep::step(timestep))
-            );
-        app.add_stage_before(
-            CoreStage::PostUpdate,
-            PhysicsStage,
-            stage
+            )
         );
     }
 }

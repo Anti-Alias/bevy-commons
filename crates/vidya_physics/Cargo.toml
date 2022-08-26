@@ -10,6 +10,12 @@ bevy_transform = "0.8.0"
 bevy_ecs = "0.8.0"
 bevy_math = "0.8.0"
 bevy_time = "0.8.0"
+
+# For debug
+bevy_asset = "0.8.0"
+bevy_render = "0.8.0"
+bevy_pbr = "0.8.0"
+
 vidya_interp = { path = "../vidya_interp" }
 
 [dev-dependencies]
