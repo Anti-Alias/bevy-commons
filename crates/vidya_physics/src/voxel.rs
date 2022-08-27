@@ -1,6 +1,5 @@
 use std::ops::Mul;
 
-
 use bevy_ecs::prelude::*;
 use bevy_math::{prelude::*, Vec3Swizzles};
 
@@ -88,6 +87,45 @@ impl VoxelChunk {
         self
     }
 
+    /// Sets the value of a voxel and returns self.
+    /// Helpful when setting multiple voxels at once.
+    pub fn set_voxel_plane(
+        &mut self,
+        xyz: u32,
+        src: UVec2,
+        dest: UVec2,
+        axis: PlaneAxis,
+        voxel_data: VoxelData
+    ) -> &mut Self {
+        match axis {
+            PlaneAxis::XY => {
+                for x in src.x..dest.x {
+                    for y in src.y..dest.y {
+                        let z = xyz;
+                        self.set_voxel(UVec3::new(x, y, z), voxel_data);
+                    }
+                }
+            },
+            PlaneAxis::YZ => {
+                for y in src.x..dest.x {
+                    for z in src.y..dest.y {
+                        let x = xyz;
+                        self.set_voxel(UVec3::new(x, y, z), voxel_data);
+                    }
+                }
+            },
+            PlaneAxis::XZ => {
+                for x in src.x..dest.x {
+                    for z in src.y..dest.y {
+                        let y = xyz;
+                        self.set_voxel(UVec3::new(x, y, z), voxel_data);
+                    }
+                }
+            }
+        }
+        self
+    }
+
     fn in_bounds(&self, coords: UVec3) -> bool {
         coords.x < self.size.x && coords.y < self.size.y && coords.z < self.size.z
     }
@@ -113,6 +151,10 @@ impl VoxelChunk {
         }
     }
 }
+
+/// Axis an axis-aligned plane can sit on
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+pub enum PlaneAxis { XY, YZ, XZ }
 
 pub struct VoxelChunkIterator<'a> {
     chunk: &'a VoxelChunk,

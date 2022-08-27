@@ -29,6 +29,9 @@ pub enum PhysicsDebugSystems {
     AddMeshToVoxelChunks
 }
 
+/// Marks a physics entity for debug rendering
+#[derive(Component, Debug, Copy, Clone)]
+pub struct DebugRender; 
 
 /// Resource that stores the materials used by the debug plugin.
 pub struct DebugMaterials {
@@ -48,7 +51,7 @@ fn add_mesh_to_voxel_chunks(
     debug_materials: Res<DebugMaterials>,
     mut meshless_chunks: Query<
         (Entity, &VoxelChunk, &Bounds),
-        (Without<Handle<Mesh>>, Without<Handle<StandardMaterial>>)
+        (With<DebugRender>, Without<Handle<Mesh>>, Without<Handle<StandardMaterial>>)
     >
 ) {
     for (entity, chunk, bounds) in &mut meshless_chunks {
