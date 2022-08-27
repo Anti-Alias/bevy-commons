@@ -99,8 +99,52 @@ impl VoxelChunk {
         let z = coords.z;
         let w = self.size.x;
         let h = self.size.y;
-        let index = x + y*w + z*(w + h);
+        //let index = x + y*w + z*w*h;
+        let index = x + w*(y + z*h);
         index as usize
+    }
+
+    // Produces iterator over voxels in chunk
+    pub fn iter(&self) -> VoxelChunkIterator<'_> {
+        VoxelChunkIterator {
+            chunk: self,
+            position: UVec3::ZERO,
+            index: 0
+        }
+    }
+}
+
+pub struct VoxelChunkIterator<'a> {
+    chunk: &'a VoxelChunk,
+    position: UVec3,
+    index: usize
+}
+impl<'a> Iterator for VoxelChunkIterator<'a> {
+    type Item = (&'a VoxelData, UVec3);
+    fn next(&mut self) -> Option<Self::Item> {
+
+        // Quits if at end
+        if self.index == self.chunk.voxels.len() {
+            return None;
+        }
+
+        // Gets voxel and updates position and index
+        let voxel = self.chunk.get_voxel(self.position).unwrap();
+        let size = self.chunk.size;
+        let pos = self.position;
+        self.position.x += 1;
+        if self.position.x == size.x {
+            self.position.x = 0;
+            self.position.y += 1;
+            if self.position.y == size.y {
+                self.position.y = 0;
+                self.position.z += 1;
+            }
+        }
+        self.index += 1;
+
+        // Done
+        Some((voxel, pos))
     }
 }
 
