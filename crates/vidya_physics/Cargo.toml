@@ -10,13 +10,18 @@ bevy_transform = "0.8.0"
 bevy_ecs = "0.8.0"
 bevy_math = "0.8.0"
 bevy_time = "0.8.0"
+vidya_interp = { path = "../vidya_interp" }
 
 # For debug
 bevy_asset = "0.8.0"
 bevy_render = "0.8.0"
 bevy_pbr = "0.8.0"
 
-vidya_interp = { path = "../vidya_interp" }
+[features]
+debug = []
+
+[profile.dev]
+features = ["debug"]
 
 [dev-dependencies]
 bevy = { version = "0.8.0", features = ["dynamic"] }

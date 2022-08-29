@@ -9,9 +9,10 @@ use bevy_math::prelude::*;
 use bevy_time::FixedTimestep;
 
 mod voxel;
-mod debug;
 pub use voxel::*;
-pub use debug::*;
+
+#[cfg(feature = "debug")]
+pub mod debug;
 
 const PHYSICS_TIMESTEP: &str = "PHYSICS_TIMESTEP";
 
