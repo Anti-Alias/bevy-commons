@@ -20,7 +20,6 @@ mod example {
     #[derive(Component)]
     struct MyCamera;
 
-
     /// Spawns light, chunk and camera
     fn startup(mut commands: Commands) {
 
