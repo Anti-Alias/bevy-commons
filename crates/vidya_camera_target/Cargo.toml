@@ -1,8 +1,8 @@
 [package]
-name = "vidya_interp"
+name = "vidya_camera_target"
 version = "0.1.0"
 edition = "2021"
-description = "A small crate that adds simple Transform interpolation logic."
+description = "A small crate that adds camera targetting logic. Depends on the vidya_interp."
 
 [dependencies]
 bevy_app = "0.8.0"

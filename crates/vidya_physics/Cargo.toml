@@ -19,4 +19,4 @@ bevy_pbr = "0.8.0"
 vidya_interp = { path = "../vidya_interp" }
 
 [dev-dependencies]
-bevy = "0.8.0"
+bevy = { version = "0.8.0", features = ["dynamic"] }
