@@ -105,20 +105,25 @@ fn create_mesh_from_chunk(chunk: &VoxelChunk, size: Vec3) -> Mesh {
     mesh
 }
 
+// Normal constants
+const N_LEFT: [f32; 3] = [-1.0, 0.0, 0.0];
+const N_RIGHT: [f32; 3] = [1.0, 0.0, 0.0];
+const N_BOTTOM: [f32; 3] = [0.0, -1.0, 0.0];
+const N_TOP: [f32; 3] = [0.0, 1.0, 0.0];
+const N_NEAR: [f32; 3] = [0.0, 0.0, 1.0];
+const N_FAR: [f32; 3] = [0.0, 0.0, -1.0];
+const N_SLOPE: [f32; 3] = [
+    0.0,
+    std::f32::consts::FRAC_1_SQRT_2,
+    std::f32::consts::FRAC_1_SQRT_2
+];
+
 fn write_cuboid(
     vertices: &mut Vec<Vertex>,
     indices: &mut Vec<u32>,
     pos: Vec3,
     size: Vec3
 ) {
-    // Normal constants
-    const N_LEFT: [f32; 3] = [-1.0, 0.0, 0.0];
-    const N_RIGHT: [f32; 3] = [1.0, 0.0, 0.0];
-    const N_BOTTOM: [f32; 3] = [0.0, -1.0, 0.0];
-    const N_TOP: [f32; 3] = [0.0, 1.0, 0.0];
-    const N_NEAR: [f32; 3] = [0.0, 0.0, 1.0];
-    const N_FAR: [f32; 3] = [0.0, 0.0, -1.0];
-    
     // Writes vertices
     let start = vertices.len();
     vertices.extend_from_slice(&[
@@ -154,14 +159,9 @@ fn write_cuboid(
     ]);
 
     // Offsets/scales vertices
-    for v in &mut vertices[start..start+24] {
-        v.pos[0] *= size.x;
-        v.pos[0] += pos.x;
-        v.pos[1] *= size.y;
-        v.pos[1] += pos.y;
-        v.pos[2] *= size.z;
-        v.pos[2] += pos.z;
-    }
+    let slice = &mut vertices[start..start+24];
+    scale(slice, size);
+    translate(slice, pos);
 
     // Writes indices
     let s = start as u32;
@@ -176,13 +176,75 @@ fn write_cuboid(
 }
 
 fn write_slope(
-    _vertices: &mut Vec<Vertex>,
-    _indices: &mut Vec<u32>,
-    _pos: Vec3,
-    _size: Vec3,
-    _orientation: Orientation
+    vertices: &mut Vec<Vertex>,
+    indices: &mut Vec<u32>,
+    pos: Vec3,
+    size: Vec3,
+    orientation: Orientation
 ) {
-    // TODO
+    let start = vertices.len();
+    vertices.extend_from_slice(&[
+        Vertex::new([0.0, 0.0, 0.0], N_LEFT),
+        Vertex::new([0.0, 0.0, 1.0], N_LEFT),
+        Vertex::new([0.0, 1.0, 0.0], N_LEFT),
+
+        Vertex::new([1.0, 1.0, 0.0], N_RIGHT),
+        Vertex::new([1.0, 0.0, 1.0], N_RIGHT),
+        Vertex::new([1.0, 0.0, 0.0], N_RIGHT),
+
+        Vertex::new([0.0, 0.0, 0.0], N_BOTTOM),
+        Vertex::new([1.0, 0.0, 0.0], N_BOTTOM),
+        Vertex::new([1.0, 0.0, 1.0], N_BOTTOM),
+        Vertex::new([0.0, 0.0, 1.0], N_BOTTOM),
+
+        Vertex::new([0.0, 0.0, 1.0], N_SLOPE),
+        Vertex::new([1.0, 0.0, 1.0], N_SLOPE),
+        Vertex::new([1.0, 1.0, 0.0], N_SLOPE),
+        Vertex::new([0.0, 1.0, 0.0], N_SLOPE),
+
+        Vertex::new([1.0, 0.0, 0.0], N_FAR),
+        Vertex::new([0.0, 0.0, 0.0], N_FAR),
+        Vertex::new([0.0, 1.0, 0.0], N_FAR),
+        Vertex::new([1.0, 1.0, 0.0], N_FAR),
+    ]);
+
+    // Offsets/scales vertices and applies orientation
+    let slice = &mut vertices[start..start+18];
+    translate(slice, Vec3::new(-0.5, -0.5, -0.5));
+    rotate(slice, orientation);
+    translate(slice, Vec3::new(0.5, 0.5, 0.5));
+    scale(slice, size);
+    translate(slice, pos);
+    
+    // Writes indices
+    let s = start as u32;
+    indices.extend_from_slice(&[
+        s+0, s+1, s+2,                      // LEFT
+        s+3, s+4, s+5,                      // RIGHT
+        s+6, s+7, s+8, s+8, s+9, s+6,       // BOTTOM
+        s+10, s+11, s+12, s+12, s+13, s+10, // SLOPE
+        s+14, s+15, s+16, s+16, s+17, s+14, // FAR
+    ]);
+}
+
+fn translate(vertices: &mut [Vertex], translation: Vec3) {
+    for v in vertices {
+        v.pos = (Vec3::from_array(v.pos) + translation).to_array();
+    }
+}
+
+fn scale(vertices: &mut [Vertex], scale: Vec3) {
+    for v in vertices {
+        v.pos = (Vec3::from_array(v.pos) * scale).to_array();
+    }
+}
+
+/// Rotates vertices by 90-degree increments based on the orientation
+fn rotate(vertices: &mut [Vertex], orientation: Orientation) {
+    for v in vertices {
+        v.pos = (orientation * Vec3::from_array(v.pos)).to_array();
+        v.norm = (orientation * Vec3::from_array(v.norm)).to_array();
+    }
 }
 
 #[derive(Clone)]

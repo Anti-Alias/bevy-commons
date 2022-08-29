@@ -32,6 +32,11 @@ impl VoxelData {
             orientation: Orientation::default()
         }
     }
+
+    pub fn with_orientation(mut self, orientation: Orientation) -> Self {
+        self.orientation = orientation;
+        self
+    }
 }
 
 /// Represents a chunk of [`Voxel`]s stored in an [`Entity`].
@@ -227,8 +232,25 @@ pub struct Orientation {
     pub z_rot: Degree
 }
 impl Orientation {
+    pub const ZERO: Orientation = Orientation {
+        x_rot: Degree::Zero,
+        y_rot: Degree::Zero,
+        z_rot: Degree::Zero,
+    };
     pub fn new(x_rot: Degree, y_rot: Degree, z_rot: Degree) -> Self {
         Self { x_rot, y_rot, z_rot }
+    }
+    pub const fn with_x_rot(mut self, x_rot: Degree) -> Self {
+        self.x_rot = x_rot;
+        self
+    }
+    pub const fn with_y_rot(mut self, y_rot: Degree) -> Self {
+        self.y_rot = y_rot;
+        self
+    }
+    pub const fn with_z_rot(mut self, z_rot: Degree) -> Self {
+        self.z_rot = z_rot;
+        self
     }
 }
 impl Add for Orientation {
@@ -299,7 +321,7 @@ impl Degree {
 
     /// Rotates a vec around the y axis
     pub fn rotate_y(self, vec: Vec3) -> Vec3 {
-        let rotated = self.rotate(vec.xz());
+        let rotated = (-self).rotate(vec.xz());
         Vec3::new(rotated.x, vec.y, rotated.y)
     }
 
@@ -345,9 +367,9 @@ impl Neg for Degree {
     type Output = Degree;
     fn neg(self) -> Self::Output {
         match self {
-            Self::Zero => Self::OneEighty,
+            Self::Zero => Self::Zero,
             Self::Ninty => Self::TwoSeventy,
-            Self::OneEighty => Self::Zero,
+            Self::OneEighty => Self::OneEighty,
             Self::TwoSeventy => Self::Ninty
         }
     }

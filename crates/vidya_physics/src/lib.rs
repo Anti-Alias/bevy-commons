@@ -185,7 +185,7 @@ impl PhysicsBundle {
 
 //////////////////////////////////////////////// Helper struct(s) ////////////////////////////////////////////////
 
-/// Represents the movement of an [`Entity`] through 3D space.
+/// Represents the movement of an [`Entity`] through 3D space
 #[derive(Debug, Clone, PartialEq)]
 pub struct Movement<'a> {
     /// Bounding box of the moving object
@@ -196,7 +196,7 @@ pub struct Movement<'a> {
     pub vel: Vec3,
 }
 
-/// Helper struct that defines an axis-aligned bounding box.
+/// Helper struct that defines an axis-aligned bounding box
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct AABB {
     pub center: Vec3,
@@ -262,14 +262,14 @@ fn apply_gravity(
     }
 }
 
-/// Dampens velocities by frictional value.
+/// Dampens velocities by frictional value
 fn apply_friction(mut entities: Query<(&mut Velocity, &Friction)>) {
     for (mut vel, fric) in &mut entities {
         vel.0 *= fric.0;
     }
 }
 
-/// Moves entities by velocities.
+/// Moves entities by velocities
 fn apply_velocity(mut entities: Query<(&Velocity, &mut CurrentTransform)>) {
     for (vel, mut transform) in &mut entities {
         transform.0.translation += vel.0;

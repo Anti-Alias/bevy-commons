@@ -2,7 +2,8 @@ use vidya_physics::*;
 use bevy::prelude::*;
 
 
-/// Example where only a single falling entity is spawned.
+/// Example where three chunks are spawned side by side.
+/// Chunks are not rotated via a [`Transform`], but rather are constructed differently.
 pub fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
