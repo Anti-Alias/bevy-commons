@@ -4,7 +4,6 @@ mod example {
     use vidya_physics::debug::*;
     use bevy::prelude::*;
 
-
     /// Example where a single chunk with slope voxels are spawned
     pub fn start() {
         App::new()
@@ -37,7 +36,7 @@ mod example {
         // Spawns voxel chunk
         let slope_chunk = generate_slope_chunk();
         commands.spawn_bundle(VoxelChunkBundle::new(
-            slope_chunk,                                   // Raw chunk data
+            slope_chunk,                                // Raw chunk data
             Transform::from_xyz(0.0, 0.0, 0.0),         // Center of the chunk in units
             Bounds::new(Vec3::new(5.0, 4.0, 1.0))       // Size of the chunk in units
         )).insert(DebugRender);                         // Allows debug info of chunk to be rendered

@@ -1,9 +1,9 @@
+use std::time::Duration;
+
 use bevy::prelude::*;
 use bevy::prelude::shape::Icosphere;
-use bevy_time::FixedTimestep;
-use vidya_interp::{InterpolationPlugin, PreviousTransform, CurrentTransform, sync_transforms};
+use vidya_fixed_timestep::{FixedTimestepPlugin, FixedTimestepStages, CurrentTransform, PreviousTransform};
 
-const MY_TIMESTEP: &str = "MY_TIMESTEP";
 const SRC: Transform = Transform::from_xyz(-2.0, 0.0, 0.0);
 const DEST: Transform = Transform::from_xyz(2.0, 0.0, 0.0)
     .with_scale(Vec3::new(2.0, 0.5, 1.0))
@@ -15,17 +15,8 @@ struct Ball;
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-
-        // Fixed timestep stage that runs once a second
-        .add_stage_before(
-            CoreStage::PostUpdate,                                  // Movement/syncing systems must run before PostUpdate, as that's when the InterpolationPlugin runs it's systems
-            MY_TIMESTEP,
-            SystemStage::parallel()
-                .with_run_criteria(FixedTimestep::step(1.0).with_label(MY_TIMESTEP))
-                .with_system(sync_transforms::<Ball>.label("SYNC")) // Syncs previous transform state with current
-                .with_system(move_ball.after("SYNC"))               // Updates current transform state after transforms have been synced
-        )
-        .add_plugin(InterpolationPlugin::<Ball>::new(MY_TIMESTEP))  // Plugin must know the name of the timestep to get correct interpolation value
+        .add_plugin(FixedTimestepPlugin::new(Duration::from_secs(1)))
+        .add_system_to_stage(FixedTimestepStages::PostFixedUpdate, move_ball)
         .add_startup_system(startup)
         .run();
 }

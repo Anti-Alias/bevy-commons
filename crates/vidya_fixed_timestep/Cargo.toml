@@ -1,8 +1,8 @@
 [package]
-name = "vidya_interp"
+name = "vidya_fixed_timestep"
 version = "0.1.0"
 edition = "2021"
-description = "A small crate that adds simple Transform interpolation logic."
+description = "A small crate that defines stages and components useful to a game that updates on a fixed timestep"
 
 [dependencies]
 bevy_app = "0.8.0"

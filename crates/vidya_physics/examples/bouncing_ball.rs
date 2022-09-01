@@ -1,5 +1,5 @@
 use bevy::prelude::shape::{Plane, Icosphere};
-use vidya_interp::{CurrentTransform, PreviousTransform};
+use vidya_fixed_timestep::{CurrentTransform, PreviousTransform};
 use vidya_physics::*;
 use bevy::prelude::*;
 

@@ -10,7 +10,7 @@ bevy_transform = "0.8.0"
 bevy_ecs = "0.8.0"
 bevy_math = "0.8.0"
 bevy_time = "0.8.0"
-vidya_interp = { path = "../vidya_interp" }
+vidya_fixed_timestep = { path = "../vidya_fixed_timestep" }
 
 # For debug
 bevy_asset = "0.8.0"

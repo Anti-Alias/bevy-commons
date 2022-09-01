@@ -203,7 +203,7 @@ pub struct VoxelChunkBundle {
     pub previous_transform: PreviousTransform,
     pub bounds: Bounds,
     pub velocity: Velocity,
-    pub physics_marker: PhysicsMarker
+    pub physics_marker: PhysicsInterpolate
 }
 impl VoxelChunkBundle {
     pub fn new(voxel_chunk: VoxelChunk, transform: Transform, bounds: Bounds) -> Self {
@@ -213,7 +213,7 @@ impl VoxelChunkBundle {
             previous_transform: PreviousTransform(transform),
             bounds,
             velocity: Velocity::default(),
-            physics_marker: PhysicsMarker
+            physics_marker: PhysicsInterpolate
         }
     }
 }

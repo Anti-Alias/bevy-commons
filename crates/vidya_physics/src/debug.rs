@@ -6,7 +6,7 @@ use bevy_render::mesh::Indices;
 use bevy_render::prelude::*;
 use bevy_pbr::prelude::*;
 use bevy_render::render_resource::PrimitiveTopology;
-use vidya_interp::InterpolationSystems;
+use vidya_fixed_timestep::InterpolationSystems;
 
 use crate::{VoxelChunk, Bounds, VoxelData, Voxel, Orientation};
 

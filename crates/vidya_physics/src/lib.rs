@@ -1,8 +1,10 @@
 use std::ops::{Neg, Sub, Add};
 use std::time::Duration;
 
-use vidya_interp::{sync_transforms, CurrentTransform, PreviousTransform, InterpolationPlugin, InterpolationSystems};
-use bevy_transform::prelude::Transform;
+use vidya_fixed_timestep::{sync_transforms, FixedTimestepPlugin, InterpolationSystems};
+pub use vidya_fixed_timestep::{CurrentTransform, PreviousTransform};
+use bevy_core_pipeline::prelude::*;
+use bevy_transform::prelude::*;
 use bevy_ecs::prelude::*;
 use bevy_app::prelude::*;
 use bevy_math::prelude::*;
@@ -32,19 +34,19 @@ impl Default for PhysicsPlugin {
 impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
 
-        // Add interpolation for entities marked with PhysicsMarker.
+        // Add interpolation for entities marked with PhysicsInterpolate.
         // This will allow for smooth movements independent of refresh rate, in spite of the engine using a fixed timestep.
-        app.add_plugin(InterpolationPlugin::<PhysicsMarker>::new(PHYSICS_TIMESTEP));
+        app.add_plugin(FixedTimestepPlugin::<PhysicsInterpolate>::new(PHYSICS_TIMESTEP));
         let timestep = self.timestep_duration.as_secs_f64();
 
         // Runs physics systems before interpolation
         app.add_system_set_to_stage(CoreStage::PostUpdate, SystemSet::new()
             .before(InterpolationSystems::Interpolate)
             .with_run_criteria(FixedTimestep::step(timestep).with_label(PHYSICS_TIMESTEP))
-            .with_system(sync_transforms::<PhysicsMarker>
+            .with_system(sync_transforms::<PhysicsInterpolate>
                 .label(PhysicsSystems::SyncTransforms)
             )
-            .with_system(sync_transforms::<PhysicsMarker>
+            .with_system(sync_transforms::<PhysicsInterpolate>
                 .label(PhysicsSystems::SyncTransforms)
             )
             .with_system(apply_gravity
@@ -149,7 +151,7 @@ impl Default for Friction {
 /// If an [`Entity`] has this, users of that entity should not manipulate [`Transform`]
 /// directly and should instead manipulate [`CurrentTransform`] (and sometimes [`PreviousTransform`]).
 #[derive(Component, Default, Debug, Copy, Clone, PartialEq)]
-pub struct PhysicsMarker;
+pub struct PhysicsInterpolate;
 
 //////////////////////////////////////////////// Bundle(s) ////////////////////////////////////////////////
 
@@ -162,7 +164,7 @@ pub struct PhysicsBundle {
     pub shape: PhysicsShape,
     pub velocity: Velocity,
     pub friction: Friction,
-    pub physics_marker: PhysicsMarker
+    pub physics_marker: PhysicsInterpolate
 }
 impl PhysicsBundle {
     pub fn new(transform: Transform, bounds: Bounds, shape: PhysicsShape) -> Self {
