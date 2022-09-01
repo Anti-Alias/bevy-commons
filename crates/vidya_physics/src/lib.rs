@@ -1,78 +1,43 @@
 use std::ops::{Neg, Sub, Add};
-use std::time::Duration;
 
-use vidya_fixed_timestep::{sync_transforms, FixedTimestepPlugin, InterpolationSystems};
+use vidya_fixed_timestep::FixedTimestepStages;
 pub use vidya_fixed_timestep::{CurrentTransform, PreviousTransform};
-use bevy_core_pipeline::prelude::*;
 use bevy_transform::prelude::*;
 use bevy_ecs::prelude::*;
 use bevy_app::prelude::*;
 use bevy_math::prelude::*;
-use bevy_time::FixedTimestep;
-
 mod voxel;
 pub use voxel::*;
 
-#[cfg(feature = "debug")]
 pub mod debug;
 
-const PHYSICS_TIMESTEP: &str = "PHYSICS_TIMESTEP";
-
-
 /// Adds a simple platformer voxel-based physics engine.
-/// Runs sytems in  the [`PhysicsStage`], which runs between [`CoreStage::Update`] and [`CoreStage::PostUpdate`].
-pub struct PhysicsPlugin {
-    pub timestep_duration: Duration
-}
-impl Default for PhysicsPlugin {
-    fn default() -> Self {
-        Self {
-            timestep_duration: Duration::from_secs_f64(1.0/60.0)
-        }
-    }
-}
+pub struct PhysicsPlugin;
 impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
-
-        // Add interpolation for entities marked with PhysicsInterpolate.
-        // This will allow for smooth movements independent of refresh rate, in spite of the engine using a fixed timestep.
-        app.add_plugin(FixedTimestepPlugin::<PhysicsInterpolate>::new(PHYSICS_TIMESTEP));
-        let timestep = self.timestep_duration.as_secs_f64();
-
         // Runs physics systems before interpolation
-        app.add_system_set_to_stage(CoreStage::PostUpdate, SystemSet::new()
-            .before(InterpolationSystems::Interpolate)
-            .with_run_criteria(FixedTimestep::step(timestep).with_label(PHYSICS_TIMESTEP))
-            .with_system(sync_transforms::<PhysicsInterpolate>
-                .label(PhysicsSystems::SyncTransforms)
-            )
-            .with_system(sync_transforms::<PhysicsInterpolate>
-                .label(PhysicsSystems::SyncTransforms)
-            )
-            .with_system(apply_gravity
-                .label(PhysicsSystems::ApplyGravity)
-            )
-            .with_system(apply_friction
-                .label(PhysicsSystems::ApplyFriction)
-                .after(PhysicsSystems::ApplyGravity)
-            )
-            .with_system(apply_velocity.label(PhysicsSystems::ApplyVelocity)
-                .after(PhysicsSystems::SyncTransforms)
-                .after(PhysicsSystems::ApplyFriction)
-            )
-            .with_system(apply_voxel_collisions
-                .label(PhysicsSystems::ApplyVoxelCollisions)
-                .after(PhysicsSystems::ApplyVelocity)
-            )
-        );
+        app
+            .add_system_set_to_stage(FixedTimestepStages::PostFixedUpdate, SystemSet::new()
+                .with_system(apply_gravity
+                    .label(PhysicsSystems::ApplyGravity)
+                )
+                .with_system(apply_friction
+                    .label(PhysicsSystems::ApplyFriction)
+                    .after(PhysicsSystems::ApplyGravity)
+                )
+                .with_system(apply_velocity.label(PhysicsSystems::ApplyVelocity)
+                    .after(PhysicsSystems::SyncTransforms)
+                    .after(PhysicsSystems::ApplyFriction)
+                )
+                .with_system(apply_voxel_collisions
+                    .label(PhysicsSystems::ApplyVoxelCollisions)
+                    .after(PhysicsSystems::ApplyVelocity)
+                )
+            );
     }
 }
 
 //////////////////////////////////////////////// Labels ////////////////////////////////////////////////
-
-#[derive(StageLabel)]
-struct PhysicsStage;
-
 #[derive(Debug, Copy, Clone, Eq, PartialEq, SystemLabel)]
 pub enum PhysicsSystems {
     /// Syncs previous position with current position

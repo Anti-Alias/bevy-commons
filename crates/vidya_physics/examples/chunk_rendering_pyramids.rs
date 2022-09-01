@@ -1,5 +1,6 @@
 #[cfg(feature = "debug")]
 mod example {
+    use vidya_fixed_timestep::FixedTimestepPlugin;
     use vidya_physics::*;
     use vidya_physics::debug::*;
     use bevy::prelude::*;
@@ -10,7 +11,8 @@ mod example {
     pub fn start() {
         App::new()
             .add_plugins(DefaultPlugins)
-            .add_plugin(PhysicsPlugin::default())   // Only added to ensure that Transform gets synced with CurrentTransform and PreviousTransform in PhysicsBundle
+            .add_plugin(FixedTimestepPlugin::default())
+            .add_plugin(PhysicsPlugin)
             .add_plugin(PhysicsDebugPlugin)         // Added to enable debug rendering, in this case, for the chunks
             .add_startup_system(startup)
             .add_system(spin_camera)

@@ -1,5 +1,5 @@
 use bevy::prelude::shape::{Plane, Icosphere};
-use vidya_fixed_timestep::{CurrentTransform, PreviousTransform};
+use vidya_fixed_timestep::{CurrentTransform, PreviousTransform, FixedTimestepPlugin};
 use vidya_physics::*;
 use bevy::prelude::*;
 
@@ -19,7 +19,8 @@ const JUMP_SPEED: f32 = 0.2;
 pub fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_plugin(PhysicsPlugin::default())
+        .add_plugin(FixedTimestepPlugin::default())
+        .add_plugin(PhysicsPlugin)
         .add_startup_system(startup)
         .add_system(bounce_ball)
         .run();

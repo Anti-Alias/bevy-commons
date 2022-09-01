@@ -6,7 +6,7 @@ use bevy_render::mesh::Indices;
 use bevy_render::prelude::*;
 use bevy_pbr::prelude::*;
 use bevy_render::render_resource::PrimitiveTopology;
-use vidya_fixed_timestep::InterpolationSystems;
+use vidya_fixed_timestep::prelude::*;
 
 use crate::{VoxelChunk, Bounds, VoxelData, Voxel, Orientation};
 
@@ -16,17 +16,8 @@ impl Plugin for  PhysicsDebugPlugin {
     fn build(&self, app: &mut bevy_app::App) {
         app
             .add_startup_system(create_materials)
-            .add_system_to_stage(CoreStage::PostUpdate,
-                add_mesh_to_voxel_chunks
-                    .label(PhysicsDebugSystems::AddMeshToVoxelChunks)
-                    .before(InterpolationSystems::Interpolate)
-            );
+            .add_fixed_system(add_mesh_to_voxel_chunks);
     }
-}
-
-#[derive(Debug, Copy, Clone, Eq, PartialEq, SystemLabel)]
-pub enum PhysicsDebugSystems {
-    AddMeshToVoxelChunks
 }
 
 /// Marks a physics entity for debug rendering

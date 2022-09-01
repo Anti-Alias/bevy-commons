@@ -115,10 +115,15 @@ fn sync_transforms(mut query: Query<(&mut PreviousTransform, &CurrentTransform)>
 /// This trait adds a helper method for adding fixed systems
 pub trait AppExt {
     fn add_fixed_system<Params>(&mut self, system: impl IntoSystemDescriptor<Params>) -> &mut Self;
+    fn add_fixed_system_set(&mut self, system_set: SystemSet) -> &mut Self;
 }
 impl AppExt for App {
     fn add_fixed_system<Params>(&mut self, system: impl IntoSystemDescriptor<Params>) -> &mut Self {
         self.add_system_to_stage(FixedTimestepStages::FixedUpdate, system);
+        self
+    }
+    fn add_fixed_system_set(&mut self, system_set: SystemSet) -> &mut Self {
+        self.add_system_set_to_stage(FixedTimestepStages::FixedUpdate, system_set);
         self
     }
 }
