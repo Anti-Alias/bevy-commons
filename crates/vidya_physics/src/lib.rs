@@ -26,7 +26,6 @@ impl Plugin for PhysicsPlugin {
                     .after(PhysicsSystems::ApplyGravity)
                 )
                 .with_system(apply_velocity.label(PhysicsSystems::ApplyVelocity)
-                    .after(PhysicsSystems::SyncTransforms)
                     .after(PhysicsSystems::ApplyFriction)
                 )
                 .with_system(apply_voxel_collisions
@@ -40,8 +39,6 @@ impl Plugin for PhysicsPlugin {
 //////////////////////////////////////////////// Labels ////////////////////////////////////////////////
 #[derive(Debug, Copy, Clone, Eq, PartialEq, SystemLabel)]
 pub enum PhysicsSystems {
-    /// Syncs previous position with current position
-    SyncTransforms,
     /// Applies friction to velocity
     ApplyFriction,
     /// Applies gravity to velocity

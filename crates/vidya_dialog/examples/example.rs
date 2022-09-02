@@ -14,15 +14,18 @@ fn startup(
     assets: Res<AssetServer>
 ) {
 
+    commands.spawn_bundle(Camera2dBundle::default());
+
+    // Dimensions of the box
     let box_width = Val::Px(512.0);
     let box_height = Val::Px(128.0);
     let box_bottom = Val::Px(128.0);
+
+    // Places to make slice in pixels
     let left_slice = 4.0;
     let right_slice = 4.0;
     let bottom_slice = 4.0;
     let top_slice = 4.0;
-
-    commands.spawn_bundle(Camera2dBundle::default());
 
     // Root node size of screen
     commands.spawn_bundle(NodeBundle {
