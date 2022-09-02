@@ -525,6 +525,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_ninepatch"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d6a355afe48cda766adc96e3b13df646b5798c38bb2ec41a16a8ec2d1517dd2"
+dependencies = [
+ "bevy",
+]
+
+[[package]]
 name = "bevy_pbr"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2891,6 +2900,19 @@ name = "vidya-commons"
 version = "0.1.0"
 dependencies = [
  "bevy",
+]
+
+[[package]]
+name = "vidya_dialog"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_app",
+ "bevy_ecs",
+ "bevy_math",
+ "bevy_ninepatch",
+ "bevy_time",
+ "bevy_transform",
 ]
 
 [[package]]
