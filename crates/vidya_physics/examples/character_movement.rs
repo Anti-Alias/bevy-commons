@@ -155,16 +155,16 @@ mod example {
         if input.pressed(KeyCode::Down) {
             z -= 1;
         }
-        use std::f32::consts::SQRT_2;
+        use std::f32::consts::FRAC_1_SQRT_2;
         let dir = match (x, z) {
-            (1, 0) => Vec2::new(SQRT_2, 0.0),
-            (1, 1) => Vec2::new(SQRT_2, -SQRT_2),
-            (0, 1) => Vec2::new(0.0, -SQRT_2),
-            (-1, 1) => Vec2::new(-SQRT_2, -SQRT_2),
-            (-1, 0) => Vec2::new(-SQRT_2, 0.0),
-            (-1, -1) => Vec2::new(-SQRT_2, SQRT_2),
-            (0, -1) => Vec2::new(0.0, SQRT_2),
-            (1, -1) => Vec2::new(SQRT_2, SQRT_2),
+            (1, 0) => Vec2::new(1.0, 0.0),
+            (1, 1) => Vec2::new(FRAC_1_SQRT_2, -FRAC_1_SQRT_2),
+            (0, 1) => Vec2::new(0.0, -1.0),
+            (-1, 1) => Vec2::new(-FRAC_1_SQRT_2, -FRAC_1_SQRT_2),
+            (-1, 0) => Vec2::new(-1.0, 0.0),
+            (-1, -1) => Vec2::new(-FRAC_1_SQRT_2, FRAC_1_SQRT_2),
+            (0, -1) => Vec2::new(0.0, 1.0),
+            (1, -1) => Vec2::new(FRAC_1_SQRT_2, FRAC_1_SQRT_2),
             _ => Vec2::ZERO
         };
 

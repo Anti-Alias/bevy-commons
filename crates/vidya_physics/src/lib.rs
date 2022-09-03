@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::ops::{Neg, Sub, Add};
 
 use vidya_fixed_timestep::FixedTimestepStages;
@@ -62,6 +63,44 @@ impl Default for Gravity {
         Self(Vec3::new(0.0, -1.0, 0.0))
     }
 }
+
+/// Resource that organizes entities into chunks that they occupy
+pub struct SpatialHash {
+    chunk_size: UVec3,
+    chunks: HashMap<IVec3, SpatialChunk>
+}
+
+impl SpatialHash {
+
+    // Adds an entity to the hash
+    fn add_entity(&mut self, chunk_coords: IVec3, entity: Entity) {
+        let chunk = self.chunks
+            .entry(chunk_coords)
+            .or_insert_with(|| SpatialChunk(Vec::new()));
+        chunk.0.push(entity);
+    }
+
+    // Removes an entity from the hash
+    fn remove_entity(&mut self, chunk_coords: IVec3, entity: Entity) {
+        let chunk = match self.chunks.get_mut(&chunk_coords) {
+            Some(chunk) => chunk,
+            None => return
+        };
+        let index = chunk.0.iter().position(|e| *e == entity);
+        match index {
+            Some(index) => {
+                chunk.0.remove(index);
+                if chunk.0.is_empty() {
+                    self.chunks.remove(&chunk_coords);
+                }
+            },
+            None => {}
+        }
+    }
+}
+
+/// Chunk in a spatial hash
+struct SpatialChunk(Vec<Entity>);
 
 
 //////////////////////////////////////////////// Components ////////////////////////////////////////////////
