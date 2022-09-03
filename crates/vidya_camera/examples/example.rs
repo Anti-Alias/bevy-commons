@@ -1,13 +1,17 @@
 use std::time::Duration;
 
 use bevy::prelude::*;
+use vidya_camera::prelude::*;
+use vidya_fixed_timestep::prelude::*;
+use vidya_fixed_timestep::FixedTimestepStages;
 use bevy::prelude::shape::{ Plane, Icosphere };
-use vidya_fixed_timestep::{prelude::*, FixedTimestepStages};
+
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugin(FixedTimestepPlugin::new(Duration::from_secs_f64(1.0/20.0)))
+        .add_plugin(CameraPlugin)
         .add_startup_system(startup)
         .add_system_to_stage(FixedTimestepStages::PostFixedUpdate, move_ball)
         .run();
@@ -17,11 +21,12 @@ fn main() {
 #[derive(Component, Debug, Copy, Clone, Eq, PartialEq)]
 pub struct MovingBall;
 
-
+// Defines the ring of the ball
 const RADIUS: f32 = 2.0;
 const Y: f32 = 1.0;
 const SPEED: f32 = 0.05;
 
+/// Spawns ball, floor plane and camera
 fn startup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -47,7 +52,7 @@ fn startup(
     });
 
     // Spawns moving ball
-    commands.spawn()
+    let ball = commands.spawn()
         .insert_bundle(PbrBundle {
             mesh: meshes.add(Icosphere { radius: 0.5, subdivisions: 3 }.into()),
             material: materials.add(Color::RED.into()),
@@ -58,13 +63,20 @@ fn startup(
             MovingBall,
             CurrentTransform(Transform::from_xyz(RADIUS, Y, 0.0)),
             PreviousTransform::default(),
-        ));
+        ))
+        .id();
 
     // Spawns camera
-    commands.spawn_bundle(Camera3dBundle {
-        transform: Transform::from_xyz(0.0, 2.0, 10.0).looking_at(Vec3::new(0.0, 0.0, 0.0), Vec3::Y),
-        ..default()
-    });
+    commands.spawn()
+        .insert_bundle(Camera3dBundle {
+            transform: Transform::from_xyz(0.0, 2.0, 10.0).looking_at(Vec3::new(0.0, 0.0, 0.0), Vec3::Y),
+            ..default()
+        })
+        .insert_bundle(CameraTargetBundle {
+            target: Target::Entity(ball),
+            target_style: TargetStyle::Offset(Vec3::new(0.0, 7.0, 7.0)),
+            ..default()
+        });
 }
 
 fn move_ball(

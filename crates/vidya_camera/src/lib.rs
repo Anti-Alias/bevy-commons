@@ -63,7 +63,7 @@ pub struct Up(pub Vec3);
 /// Has cameras with a target follow their target
 fn update_cameras(
     mut cameras: Query<(&Target, &TargetStyle, &Up, &mut Transform)>,
-    target_query: Query<(&Transform, Option<&Up>)>
+    target_query: Query<(&Transform, Option<&Up>), Without<Target>>
 ) {
     for (cam_target, cam_style, cam_up, mut cam_trans) in &mut cameras {
         
@@ -100,6 +100,16 @@ fn update_cameras(
                 cam_trans.translation = target_pos + offset;
                 cam_trans.look_at(target_pos, target_up);
             }
-        }        
+        }
     }
+}
+
+pub mod prelude {
+    pub use crate::{
+        CameraPlugin,
+        CameraTargetBundle,
+        Target,
+        TargetStyle,
+        Up  
+    };
 }
