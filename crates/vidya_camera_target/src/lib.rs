@@ -1,13 +1,15 @@
 use bevy_app::prelude::*;
 use bevy_ecs::prelude::*;
 use bevy_ecs::query::QueryEntityError;
-use bevy_transform::prelude::*;
+use bevy_transform::{prelude::*, TransformSystem};
 use bevy_math::Vec3;
 
 pub struct CameraTargetPlugin;
 impl Plugin for CameraTargetPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_to_stage(CoreStage::PostUpdate, update_cameras);
+        app.add_system_to_stage(CoreStage::PostUpdate, update_cameras
+            .before(TransformSystem::TransformPropagate)
+        );
     }
 }
 

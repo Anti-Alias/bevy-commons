@@ -2952,6 +2952,7 @@ dependencies = [
  "bevy_render",
  "bevy_time",
  "bevy_transform",
+ "vidya_camera_target",
  "vidya_fixed_timestep",
 ]
 

@@ -22,3 +22,4 @@ debug = []
 
 [dev-dependencies]
 bevy = { version = "0.8.0", features = ["dynamic"] }
+vidya_camera_target = { path = "../vidya_camera_target" }
