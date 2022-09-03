@@ -18,12 +18,6 @@ const JUMP_SPEED: f32 = 0.2;
 /// Example where only a single falling entity is spawned.
 pub fn main() {
     App::new()
-        .insert_resource(WindowDescriptor {
-            width: 512.0,
-            height: 512.0,
-            position: WindowPosition::At(Vec2::new(1024.0, 0.0)),
-            ..default()
-        })
         .add_plugins(DefaultPlugins)
         .add_plugin(FixedTimestepPlugin::default())
         .add_plugin(PhysicsPlugin)
