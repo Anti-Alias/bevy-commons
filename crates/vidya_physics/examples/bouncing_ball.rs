@@ -55,7 +55,6 @@ fn startup(
     });
 
     // Spawns ball
-    let start_transform = Transform::from_xyz(0.0, 0.5, 0.0);
     commands
         .spawn()
         .insert_bundle(PbrBundle {
@@ -65,8 +64,7 @@ fn startup(
         })
         .insert_bundle(
             PhysicsBundle {
-                current_transform: CurrentTransform(start_transform),
-                previous_transform: PreviousTransform(start_transform),
+                current_transform: CurrentTransform(Transform::from_xyz(0.0, 0.5, 0.0)),
                 bounds: Bounds::new(Vec3::new(1.0, 1.0, 1.0)),
                 velocity: Velocity(Vec3::new(0.05, JUMP_SPEED, 0.025)),
                 ..default()

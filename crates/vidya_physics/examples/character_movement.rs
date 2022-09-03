@@ -19,7 +19,11 @@ mod example {
     }
 
     /// Spawns light, chunks and camera
-    fn startup(mut commands: Commands) {
+    fn startup(
+        mut commands: Commands,
+        mut meshes: ResMut<Assets<Mesh>>,
+        mut materials: ResMut<Assets<StandardMaterial>>
+    ) {
 
         // Spawns light above scene
         commands.spawn_bundle(PointLightBundle {
@@ -39,6 +43,22 @@ mod example {
             Transform::from_xyz(0.0, 0.0, 0.0),         // Center of the chunk in units
             Bounds::new(Vec3::new(8.0, 2.0, 8.0))       // Size of the chunk in units
         )).insert(DebugRender);                         // Allows debug info of chunk to be rendered
+
+        // Spawns player
+        commands.spawn()
+            .insert_bundle(PbrBundle {
+                mesh: meshes.add(shape::Box::new(1.0, 1.0, 1.0).into()),
+                material: materials.add(Color::RED.into()),
+                ..default()
+            })
+            .insert_bundle(
+                PhysicsBundle {
+                    current_transform: CurrentTransform(Transform::from_xyz(0.0, 0.5, 0.0)),
+                    bounds: Bounds::new(Vec3::new(1.0, 1.0, 1.0)),
+                    velocity: Velocity(Vec3::new(0.0, 0.0, 0.0)),
+                    ..default()
+                }
+            );
 
         // Spawns camera
         commands.spawn()
