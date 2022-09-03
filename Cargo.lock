@@ -2903,7 +2903,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "vidya_camera"
+name = "vidya_camera_target"
 version = "0.1.0"
 dependencies = [
  "bevy",

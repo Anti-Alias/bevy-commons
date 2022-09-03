@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use bevy::prelude::*;
-use vidya_camera::prelude::*;
+use vidya_camera_target::prelude::*;
 use vidya_fixed_timestep::prelude::*;
 use vidya_fixed_timestep::FixedTimestepStages;
 use bevy::prelude::shape::{ Plane, Icosphere };
@@ -11,7 +11,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugin(FixedTimestepPlugin::new(Duration::from_secs_f64(1.0/20.0)))
-        .add_plugin(CameraPlugin)
+        .add_plugin(CameraTargetPlugin)
         .add_startup_system(startup)
         .add_system_to_stage(FixedTimestepStages::PostFixedUpdate, move_ball)
         .run();

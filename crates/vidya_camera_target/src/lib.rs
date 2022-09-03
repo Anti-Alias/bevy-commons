@@ -4,14 +4,16 @@ use bevy_ecs::query::QueryEntityError;
 use bevy_transform::prelude::*;
 use bevy_math::Vec3;
 
-pub struct CameraPlugin;
-impl Plugin for CameraPlugin {
+pub struct CameraTargetPlugin;
+impl Plugin for CameraTargetPlugin {
     fn build(&self, app: &mut App) {
         app.add_system_to_stage(CoreStage::PostUpdate, update_cameras);
     }
 }
 
-/// Bundle to be inserted into a 3d camera
+/// Bundle to be inserted into a 3d camera.
+/// Allows the camera to follow a target.
+/// To stop following a target, remove the [`Target`] component.
 #[derive(Bundle)]
 pub struct CameraTargetBundle {
     pub target: Target,
@@ -106,7 +108,7 @@ fn update_cameras(
 
 pub mod prelude {
     pub use crate::{
-        CameraPlugin,
+        CameraTargetPlugin,
         CameraTargetBundle,
         Target,
         TargetStyle,

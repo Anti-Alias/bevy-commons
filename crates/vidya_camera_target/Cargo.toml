@@ -1,5 +1,5 @@
 [package]
-name = "vidya_camera"
+name = "vidya_camera_target"
 version = "0.1.0"
 edition = "2021"
 description = "Repository that adds simple camera targetting logic"
