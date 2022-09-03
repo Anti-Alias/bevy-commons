@@ -56,7 +56,12 @@ impl Plugin for FixedTimestepPlugin {
             .add_stage_after(
                 FixedTimestepStages::PostFixedUpdate,
                 FixedTimestepStages::InterpolateTransforms,
-                SystemStage::single(interpolate_transforms)
+                SystemStage::single_threaded()
+                    .with_system(sync_added_transforms.label(FixedTimestepSystems::SyncAddedTransforms))
+                    .with_system(interpolate_transforms
+                        .label(FixedTimestepSystems::InterpolateTransforms)
+                        .after(FixedTimestepSystems::SyncAddedTransforms)
+                    )
             );
     }
 }
@@ -77,6 +82,13 @@ pub enum FixedTimestepStages {
     /// Manipulating a [`CurrentTransform`] here will cause the entity to "interpolate".
     PostFixedUpdate,
     /// Stage where [`Transform`]s are interpolated between [`PreviousTransform`]s and [`CurrentTransform`]s.
+    InterpolateTransforms
+}
+
+/// Labels for systems.
+#[derive(SystemLabel, Debug, Copy, Clone, Eq, PartialEq, Hash)]
+pub enum FixedTimestepSystems {
+    SyncAddedTransforms,
     InterpolateTransforms
 }
 
@@ -111,6 +123,25 @@ fn sync_transforms(mut query: Query<(&mut PreviousTransform, &CurrentTransform)>
         prev.0 = current.0;
     }
 }
+
+/// Reusable system that syncs the previous transform state with the current.
+/// Ensures that newly added entities with both a PreviousTransform and CurrentTransform
+/// are synced before use to prevent odd interpolation errors.
+fn sync_added_transforms(mut query: Query<
+    (
+        &mut PreviousTransform,
+        &CurrentTransform
+    ),
+    (
+        Added<PreviousTransform>,
+        Added<CurrentTransform>
+    )>
+) {
+    for (mut prev, current) in &mut query {
+        prev.0 = current.0;
+    }
+}
+
 
 /// This trait adds a helper method for adding fixed systems
 pub trait AppExt {

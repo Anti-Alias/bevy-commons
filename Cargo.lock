@@ -2903,6 +2903,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "vidya_camera"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_app",
+ "bevy_ecs",
+ "bevy_log",
+ "bevy_math",
+ "bevy_transform",
+ "vidya_fixed_timestep",
+]
+
+[[package]]
 name = "vidya_dialog"
 version = "0.1.0"
 dependencies = [
