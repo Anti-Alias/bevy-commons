@@ -10,6 +10,7 @@ use bevy_math::prelude::*;
 mod voxel;
 pub use voxel::*;
 
+#[cfg(feature = "debug")]
 pub mod debug;
 
 /// Adds a simple platformer voxel-based physics engine.

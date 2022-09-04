@@ -23,3 +23,15 @@ debug = []
 [dev-dependencies]
 bevy = { version = "0.8.0", features = ["dynamic"] }
 vidya_camera_target = { path = "../vidya_camera_target" }
+
+[[example]]
+name = "character_movement"
+required-features = ["debug"]
+
+[[example]]
+name = "chunk_rendering_pyramids"
+required-features = ["debug"]
+
+[[example]]
+name = "chunk_rendering_slopes"
+required-features = ["debug"]
