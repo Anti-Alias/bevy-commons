@@ -1,4 +1,5 @@
 use bevy::prelude::shape::{Plane, Icosphere};
+use bevy_inspector_egui::WorldInspectorPlugin;
 use vidya_fixed_timestep::{CurrentTransform, PreviousTransform, FixedTimestepPlugin};
 use vidya_physics::*;
 use bevy::prelude::*;
@@ -19,6 +20,7 @@ const JUMP_SPEED: f32 = 0.2;
 pub fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
+        .add_plugin(WorldInspectorPlugin::new())
         .add_plugin(FixedTimestepPlugin::default())
         .add_plugin(PhysicsPlugin)
         .add_startup_system(startup)

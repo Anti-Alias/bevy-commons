@@ -9,6 +9,7 @@ bevy_app = "0.8.0"
 bevy_transform = "0.8.0"
 bevy_ecs = "0.8.0"
 bevy_time = "0.8.0"
+bevy_reflect = "0.8.0"
 
 [dev-dependencies]
 bevy = { version = "0.8.0", features = ["dynamic"] }

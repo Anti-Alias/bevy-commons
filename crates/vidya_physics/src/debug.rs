@@ -1,3 +1,4 @@
+use bevy_reflect::prelude::*;
 use bevy_app::prelude::*;
 use bevy_ecs::prelude::*;
 use bevy_asset::prelude::*;
@@ -21,7 +22,7 @@ impl Plugin for  PhysicsDebugPlugin {
 }
 
 /// Marks a physics entity for debug rendering
-#[derive(Component, Debug, Copy, Clone)]
+#[derive(Component, Debug, Copy, Clone, Reflect)]
 pub struct DebugRender; 
 
 /// Resource that stores the materials used by the debug plugin.

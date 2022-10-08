@@ -1,7 +1,9 @@
 use std::ops::Mul;
 
 use bevy_ecs::prelude::*;
-use bevy_math::{prelude::*, Vec3Swizzles};
+use bevy_math::prelude::*;
+use bevy_math::Vec3Swizzles;
+use bevy_reflect::prelude::*;
 
 use super::*;
 
@@ -40,9 +42,10 @@ impl VoxelData {
 }
 
 /// Represents a chunk of [`Voxel`]s stored in an [`Entity`].
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Reflect)]
 pub struct VoxelChunk {
     size: UVec3,
+    #[reflect(ignore)]
     voxels: Vec<VoxelData>
 }
 impl VoxelChunk {

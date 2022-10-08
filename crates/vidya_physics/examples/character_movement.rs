@@ -1,10 +1,13 @@
 use vidya_camera_target::prelude::*;
 use vidya_fixed_timestep::{CurrentTransform, PreviousTransform, FixedTimestepPlugin};
 use vidya_physics::*;
+
 use bevy::prelude::*;
 
+use bevy_inspector_egui::WorldInspectorPlugin;
+
 // Marks ball entity
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Reflect)]
 struct Ball;
 
 // Wall constants
@@ -24,7 +27,9 @@ pub fn main() {
             position: WindowPosition::At(Vec2::new(1024.0, 0.0)),
             ..default()
         })
+        .register_type::<Ball>()
         .add_plugins(DefaultPlugins)
+        .add_plugin(WorldInspectorPlugin::new())
         .add_plugin(FixedTimestepPlugin::default())
         .add_plugin(PhysicsPlugin)
         .add_plugin(CameraTargetPlugin)

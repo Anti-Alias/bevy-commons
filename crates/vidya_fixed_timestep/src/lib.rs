@@ -5,6 +5,7 @@ use bevy_ecs::schedule::IntoSystemDescriptor;
 use bevy_transform::prelude::*;
 use bevy_ecs::prelude::*;
 use bevy_time::{FixedTimestep, FixedTimesteps};
+use bevy_reflect::prelude::*;
 
 /// Label for fixed timestep
 static VIDYA_FIXED: &str = "VIDYA_FIXED";
@@ -12,9 +13,9 @@ static VIDYA_FIXED: &str = "VIDYA_FIXED";
 
 /// Plugin that interpolates [`Transform`] components between
 /// [`PreviousTransform`] and [`CurrentTransform`] components during the [`CoreStage::PostUpdate`] stage.
-/// It is the reponsibility of the user of this plugin to properly set those components during the fixed update.
-/// The user should also ensure that their fixed timestep runs prior to the [`CoreStage::PostUpdate`] stage for
-/// maximum responsiveness.
+/// Users of the plugin should update spawn their entities with these components and update the [`CurrentTransform`]
+/// during the [`FixedTimestepStages::FixedUpdate`] stage.
+/// If the user wishes to "teleport" an entity (move it without interpolation), they must update its [`CurrentTransform`] and sync its [`PreviousTransform`].
 pub struct FixedTimestepPlugin {
     step: Duration
 }
@@ -35,6 +36,8 @@ impl Plugin for FixedTimestepPlugin {
         // Sync stage
         let step = self.step.as_secs_f64();
         app
+            .register_type::<CurrentTransform>()
+            .register_type::<PreviousTransform>()
             .add_stage_after(
                 CoreStage::Update,
                 FixedTimestepStages::FixedUpdate,
@@ -93,11 +96,13 @@ pub enum FixedTimestepSystems {
 }
 
 /// Transform of [`Entity`] during current game tick
-#[derive(Component, Default, Debug, PartialEq, Clone, Copy)]
+#[derive(Component, Default, Debug, PartialEq, Clone, Copy, Reflect)]
+#[reflect(Component)]
 pub struct CurrentTransform(pub Transform);
 
 /// Transform of [`Entity`] during previous game tick
-#[derive(Component, Default, Debug, PartialEq, Clone, Copy)]
+#[derive(Component, Default, Debug, PartialEq, Clone, Copy, Reflect)]
+#[reflect(Component)]
 pub struct PreviousTransform(pub Transform);
 
 /// Interpolates [`Transform`] components between [`PreviousTransform`] and [`CurrentTransform`]1

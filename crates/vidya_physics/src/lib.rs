@@ -6,9 +6,13 @@ use bevy_transform::prelude::*;
 use bevy_ecs::prelude::*;
 use bevy_app::prelude::*;
 use bevy_math::prelude::*;
+use bevy_reflect::prelude::*;
+
+
 mod voxel;
 pub use voxel::*;
 
+#[cfg(feature = "debug")]
 pub mod debug;
 
 /// Adds a simple platformer voxel-based physics engine.
@@ -17,6 +21,12 @@ impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
         // Runs physics systems before interpolation
         app
+            .register_type::<Velocity>()
+            .register_type::<PhysicsShape>()
+            .register_type::<Bounds>()
+            .register_type::<Friction>()
+            .register_type::<PhysicsInterpolate>()
+            .register_type::<VoxelChunk>()
             .add_system_set_to_stage(FixedTimestepStages::PostFixedUpdate, SystemSet::new()
                 .with_system(apply_gravity
                     .label(PhysicsSystems::ApplyGravity)
@@ -67,11 +77,13 @@ impl Default for Gravity {
 //////////////////////////////////////////////// Components ////////////////////////////////////////////////
 
 /// Velocity of an [`Entity`].
-#[derive(Component, Debug, Copy, Clone, PartialEq, Default)]
+#[derive(Component, Debug, Copy, Clone, PartialEq, Default, Reflect)]
+#[reflect(Component)]
 pub struct Velocity(pub Vec3);
 
 /// Represents the shape of an [`Entity`].
-#[derive(Component, Debug, Clone, PartialEq, Default)]
+#[derive(Component, Debug, Clone, PartialEq, Default, Reflect)]
+#[reflect(Component)]
 pub enum PhysicsShape {
     #[default]
     Cuboid,
@@ -79,7 +91,8 @@ pub enum PhysicsShape {
 }
 
 /// Represents the bounds of an unscaled [`Entity`].
-#[derive(Component, Debug, Copy, Clone, PartialEq, Default)]
+#[derive(Component, Debug, Copy, Clone, PartialEq, Default, Reflect)]
+#[reflect(Component)]
 pub struct Bounds {
     /// Size of half the width, half the height and half the depth of the AABB.
     pub half_extents: Vec3
@@ -96,7 +109,8 @@ impl Bounds {
 
 /// Frictional value of an [`Entity`].
 /// Used to dampen movement.
-#[derive(Component, Debug, Copy, Clone, PartialEq)]
+#[derive(Component, Debug, Copy, Clone, PartialEq, Reflect)]
+#[reflect(Component)]
 pub struct Friction(pub Vec3);
 impl Friction {
     pub fn new(value: f32) -> Self {
@@ -112,7 +126,8 @@ impl Default for Friction {
 /// Marker component that lets the interpolation plugin select the correct entities.
 /// If an [`Entity`] has this, users of that entity should not manipulate [`Transform`]
 /// directly and should instead manipulate [`CurrentTransform`] (and sometimes [`PreviousTransform`]).
-#[derive(Component, Default, Debug, Copy, Clone, PartialEq)]
+#[derive(Component, Default, Debug, Copy, Clone, PartialEq, Reflect)]
+#[reflect(Component)]
 pub struct PhysicsInterpolate;
 
 //////////////////////////////////////////////// Bundle(s) ////////////////////////////////////////////////
