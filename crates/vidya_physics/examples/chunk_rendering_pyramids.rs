@@ -40,21 +40,27 @@ fn startup(mut commands: Commands) {
     let chunk_xy = generate_chunk(PlaneAxis::XY);
     let chunk_yz = generate_chunk(PlaneAxis::YZ);
     let chunk_xz = generate_chunk(PlaneAxis::XZ);
-    commands.spawn_bundle(VoxelChunkBundle::new(
-        chunk_xy,                                   // Raw chunk data
-        Transform::from_xyz(0.0, 0.0, 0.0),         // Center of the chunk in units
-        Bounds::new(Vec3::new(2.0, 2.0, 2.0))       // Size of the chunk in units
-    )).insert(DebugRender);                         // Allows debug info of chunk to be rendered
-    commands.spawn_bundle(VoxelChunkBundle::new(
-        chunk_yz,
-        Transform::from_xyz(-3.0, 0.0, 0.0),
-        Bounds::new(Vec3::new(2.0, 2.0, 2.0))
-    )).insert(DebugRender);
-    commands.spawn_bundle(VoxelChunkBundle::new(
-        chunk_xz,
-        Transform::from_xyz(3.0, 0.0, 0.0),
-        Bounds::new(Vec3::new(2.0, 2.0, 2.0))
-    )).insert(DebugRender);
+
+    commands.spawn_bundle(PhysicsBundle {
+        shape: Shape::Chunk(chunk_xy),
+        current_transform: CurrentTransform(Transform::from_xyz(0.0, 0.0, 0.0)),
+        bounds: Bounds::new(Vec3::new(2.0, 2.0, 2.0)),
+        ..default()
+    }).insert(DebugRender);
+
+    commands.spawn_bundle(PhysicsBundle {
+        shape: Shape::Chunk(chunk_yz),
+        current_transform: CurrentTransform(Transform::from_xyz(-3.0, 0.0, 0.0)),
+        bounds: Bounds::new(Vec3::new(2.0, 2.0, 2.0)),
+        ..default()
+    }).insert(DebugRender);
+
+    commands.spawn_bundle(PhysicsBundle {
+        shape: Shape::Chunk(chunk_xz),
+        current_transform: CurrentTransform(Transform::from_xyz(3.0, 0.0, 0.0)),
+        bounds: Bounds::new(Vec3::new(2.0, 2.0, 2.0)),
+        ..default()
+    }).insert(DebugRender);
 
     // Spawns camera
     commands.spawn()

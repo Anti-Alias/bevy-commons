@@ -22,7 +22,7 @@ impl Plugin for PhysicsPlugin {
         // Runs physics systems before interpolation
         app
             .register_type::<Velocity>()
-            .register_type::<PhysicsShape>()
+            .register_type::<Shape>()
             .register_type::<Bounds>()
             .register_type::<Friction>()
             .register_type::<PhysicsInterpolate>()
@@ -82,12 +82,13 @@ impl Default for Gravity {
 pub struct Velocity(pub Vec3);
 
 /// Represents the shape of an [`Entity`].
-#[derive(Component, Debug, Clone, PartialEq, Default, Reflect)]
+#[derive(Component, Debug, Default, Clone, Reflect)]
 #[reflect(Component)]
-pub enum PhysicsShape {
+pub enum Shape {
     #[default]
     Cuboid,
-    Capsule
+    Capsule,
+    Chunk(VoxelChunk)
 }
 
 /// Represents the bounds of an unscaled [`Entity`].
@@ -133,18 +134,18 @@ pub struct PhysicsInterpolate;
 //////////////////////////////////////////////// Bundle(s) ////////////////////////////////////////////////
 
 /// Bundle of all the components needed for an [`Entity`] to partake in a physics simulation
-#[derive(Bundle, Default, Debug, Clone, PartialEq)]
+#[derive(Bundle, Default, Debug, Clone)]
 pub struct PhysicsBundle {
     pub current_transform: CurrentTransform,
     pub previous_transform: PreviousTransform,
     pub bounds: Bounds,
-    pub shape: PhysicsShape,
+    pub shape: Shape,
     pub velocity: Velocity,
     pub friction: Friction,
     pub physics_marker: PhysicsInterpolate
 }
 impl PhysicsBundle {
-    pub fn new(transform: Transform, bounds: Bounds, shape: PhysicsShape) -> Self {
+    pub fn new(transform: Transform, bounds: Bounds, shape: Shape) -> Self {
         Self {
             current_transform: CurrentTransform(transform),
             previous_transform: PreviousTransform(transform),
@@ -166,12 +167,12 @@ impl PhysicsBundle {
 //////////////////////////////////////////////// Helper struct(s) ////////////////////////////////////////////////
 
 /// Represents the movement of an [`Entity`] through 3D space
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct Movement<'a> {
     /// Bounding box of the moving object
     pub aabb: AABB,
     /// Shape of the body
-    pub shape: &'a PhysicsShape,
+    pub shape: &'a Shape,
     /// Velocity of the object
     pub vel: Vec3,
 }

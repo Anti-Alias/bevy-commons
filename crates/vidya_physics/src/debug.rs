@@ -8,6 +8,7 @@ use bevy_render::prelude::*;
 use bevy_pbr::prelude::*;
 use bevy_render::render_resource::PrimitiveTopology;
 use vidya_fixed_timestep::prelude::*;
+use crate::Shape;
 
 use crate::{VoxelChunk, Bounds, VoxelData, Voxel, Orientation};
 
@@ -42,11 +43,15 @@ fn add_mesh_to_voxel_chunks(
     mut meshes: ResMut<Assets<Mesh>>,
     debug_materials: Res<DebugMaterials>,
     mut meshless_chunks: Query<
-        (Entity, &VoxelChunk, &Bounds),
+        (Entity, &Shape, &Bounds),
         (With<DebugRender>, Without<Handle<Mesh>>, Without<Handle<StandardMaterial>>)
     >
 ) {
-    for (entity, chunk, bounds) in &mut meshless_chunks {
+    for (entity, shape, bounds) in &mut meshless_chunks {
+        let chunk = match shape {
+            Shape::Chunk(chunk) => chunk,
+            _ => continue
+        };
         commands.entity(entity).insert_bundle(PbrBundle {
             mesh: meshes.add(create_mesh_from_chunk(
                 chunk,

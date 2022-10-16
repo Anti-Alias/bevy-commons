@@ -42,7 +42,7 @@ impl VoxelData {
 }
 
 /// Represents a chunk of [`Voxel`]s stored in an [`Entity`].
-#[derive(Component, Debug, Reflect)]
+#[derive(Component, Debug, Clone, Reflect)]
 pub struct VoxelChunk {
     size: UVec3,
     #[reflect(ignore)]
@@ -195,29 +195,6 @@ impl<'a> Iterator for VoxelChunkIterator<'a> {
 
         // Done
         Some((voxel, pos))
-    }
-}
-
-/// Bundle of all the components needed for voxel chunk [`Entity`] to partake in a physics simulation
-#[derive(Bundle)]
-pub struct VoxelChunkBundle {
-    pub voxel_chunk: VoxelChunk,
-    pub current_transform: CurrentTransform,
-    pub previous_transform: PreviousTransform,
-    pub bounds: Bounds,
-    pub velocity: Velocity,
-    pub physics_marker: PhysicsInterpolate
-}
-impl VoxelChunkBundle {
-    pub fn new(voxel_chunk: VoxelChunk, transform: Transform, bounds: Bounds) -> Self {
-        Self {
-            voxel_chunk,
-            current_transform: CurrentTransform(transform),
-            previous_transform: PreviousTransform(transform),
-            bounds,
-            velocity: Velocity::default(),
-            physics_marker: PhysicsInterpolate
-        }
     }
 }
 

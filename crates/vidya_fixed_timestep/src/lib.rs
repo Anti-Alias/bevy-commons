@@ -13,9 +13,11 @@ static VIDYA_FIXED: &str = "VIDYA_FIXED";
 
 /// Plugin that interpolates [`Transform`] components between
 /// [`PreviousTransform`] and [`CurrentTransform`] components during the [`CoreStage::PostUpdate`] stage.
-/// Users of the plugin should update spawn their entities with these components and update the [`CurrentTransform`]
-/// during the [`FixedTimestepStages::FixedUpdate`] stage.
-/// If the user wishes to "teleport" an entity (move it without interpolation), they must update its [`CurrentTransform`] and sync its [`PreviousTransform`].
+/// Adds the following stages:
+///     [`FixedTimestepStages::FixedUpdate`],
+///     [`FixedTimestepStages::SyncTransforms`],
+///     [`FixedTimestepStages::PostFixedUpdate`],
+///     [`FixedTimestepStages::InterpolateTransforms`]
 pub struct FixedTimestepPlugin {
     step: Duration
 }
@@ -42,9 +44,7 @@ impl Plugin for FixedTimestepPlugin {
                 CoreStage::Update,
                 FixedTimestepStages::FixedUpdate,
                 SystemStage::parallel()
-                    .with_run_criteria(
-                        FixedTimestep::step(step).with_label(VIDYA_FIXED)
-                    )
+                    .with_run_criteria(FixedTimestep::step(step).with_label(VIDYA_FIXED))
             )
             .add_stage_after(
                 FixedTimestepStages::FixedUpdate,
@@ -78,13 +78,14 @@ pub enum FixedTimestepStages {
     /// Manipulating a [`CurrentTransform`] here will cause the entity to "teleport".
     FixedUpdate,
     /// Simple stage where [`PreviousTransform`]s get synced with [`CurrentTransform`]s.
-    /// Not to be trifled with! (Psst, don't add systems to it!)
+    /// Do not touch.
     SyncTransforms,
     /// Fixed-timestep version of [`CoreStage::PostUpdate`].
     /// Great place to put a physics engine.
     /// Manipulating a [`CurrentTransform`] here will cause the entity to "interpolate".
     PostFixedUpdate,
     /// Stage where [`Transform`]s are interpolated between [`PreviousTransform`]s and [`CurrentTransform`]s.
+    /// Do not touch.
     InterpolateTransforms
 }
 

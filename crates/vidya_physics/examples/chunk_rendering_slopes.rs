@@ -35,11 +35,12 @@ fn startup(mut commands: Commands) {
 
     // Spawns voxel chunk
     let slope_chunk = generate_slope_chunk();
-    commands.spawn_bundle(VoxelChunkBundle::new(
-        slope_chunk,                                // Raw chunk data
-        Transform::from_xyz(0.0, 0.0, 0.0),         // Center of the chunk in units
-        Bounds::new(Vec3::new(5.0, 4.0, 1.0))       // Size of the chunk in units
-    )).insert(DebugRender);                         // Allows debug info of chunk to be rendered
+    commands.spawn_bundle(PhysicsBundle {
+        shape: Shape::Chunk(slope_chunk),                                           // Raw chunk data
+        current_transform: CurrentTransform(Transform::from_xyz(0.0, 0.0, 0.0)),    // Center of the chunk in units
+        bounds: Bounds::new(Vec3::new(5.0, 4.0, 1.0)),                              // Size of the chunk in units
+        ..default()
+    }).insert(DebugRender);                                                         // Allows debug info of chunk to be rendered
 
     // Spawns camera
     commands.spawn()
