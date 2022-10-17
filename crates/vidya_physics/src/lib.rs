@@ -10,7 +10,9 @@ use bevy_reflect::prelude::*;
 
 
 mod voxel;
+mod collision;
 pub use voxel::*;
+pub use collision::*;
 
 #[cfg(feature = "debug")]
 pub mod debug;
@@ -27,6 +29,7 @@ impl Plugin for PhysicsPlugin {
             .register_type::<Friction>()
             .register_type::<PhysicsInterpolate>()
             .register_type::<VoxelChunk>()
+            .init_resource::<PhysicsConfig>()
             .add_system_set_to_stage(FixedTimestepStages::PostFixedUpdate, SystemSet::new()
                 .with_system(apply_gravity
                     .label(PhysicsSystems::ApplyGravity)
@@ -35,12 +38,9 @@ impl Plugin for PhysicsPlugin {
                     .label(PhysicsSystems::ApplyFriction)
                     .after(PhysicsSystems::ApplyGravity)
                 )
-                .with_system(apply_velocity.label(PhysicsSystems::ApplyVelocity)
+                .with_system(update
+                    .label(PhysicsSystems::Update)
                     .after(PhysicsSystems::ApplyFriction)
-                )
-                .with_system(apply_voxel_collisions
-                    .label(PhysicsSystems::ApplyVoxelCollisions)
-                    .after(PhysicsSystems::ApplyVelocity)
                 )
             );
     }
@@ -54,7 +54,7 @@ pub enum PhysicsSystems {
     /// Applies gravity to velocity
     ApplyGravity,
     /// Applies velocity to position
-    ApplyVelocity,
+    Update,
     /// Applies voxel collisions (moving entities w/ static terrain chunks)
     ApplyVoxelCollisions,
     /// Linearly interpolates transform components between Positions and PreviousPositions
@@ -140,6 +140,7 @@ pub struct PhysicsBundle {
     pub previous_transform: PreviousTransform,
     pub bounds: Bounds,
     pub shape: Shape,
+    pub config: CollisionConfig,
     pub velocity: Velocity,
     pub friction: Friction,
     pub physics_marker: PhysicsInterpolate
@@ -250,14 +251,39 @@ fn apply_friction(mut entities: Query<(&mut Velocity, &Friction)>) {
     }
 }
 
-/// Moves entities by velocities
-fn apply_velocity(mut entities: Query<(&Velocity, &mut CurrentTransform)>) {
-    for (vel, mut transform) in &mut entities {
-        transform.0.translation += vel.0;
+/// Moves entities with substeps, then applies collisions.
+fn update(
+    config: Res<PhysicsConfig>,
+    mut physics_objects: Query<(&Velocity, &mut CurrentTransform)>
+) {
+
+    // For each substep...
+    for _ in 0..config.substeps {
+
+
+        // Move physics objects
+        for (vel, mut transform) in &mut physics_objects {
+            transform.0.translation += vel.0;
+        }
+
+        // Computes object/object collisions
+        let mut combinations = physics_objects.iter_combinations_mut();
+        while let Some([obj_a, obj_b]) = combinations.fetch_next() {
+
+        }
     }
 }
 
-/// Applies voxel collision code
-fn apply_voxel_collisions() {
-    // TODO
+/// Configuration for the physics engine
+#[derive(Copy, Clone, PartialEq)]
+pub struct PhysicsConfig {
+    pub substeps: usize
+}
+
+impl Default for PhysicsConfig {
+    fn default() -> Self {
+        Self {
+            substeps: 4
+        }
+    }
 }
