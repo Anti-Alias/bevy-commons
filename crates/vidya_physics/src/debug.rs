@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use bevy_reflect::prelude::*;
 use bevy_app::prelude::*;
 use bevy_ecs::prelude::*;
@@ -18,42 +20,48 @@ pub struct PhysicsDebugPlugin;
 impl Plugin for  PhysicsDebugPlugin {
     fn build(&self, app: &mut bevy_app::App) {
         app
-            .add_startup_system(create_materials)
+            .init_resource::<DebugMaterials>()
             .add_fixed_system(add_mesh_to_debug_shapes);
     }
 }
 
 /// Marks a physics entity for debug rendering
 #[derive(Component, Debug, Copy, Clone, Reflect)]
-pub struct DebugRender(Color);
+pub struct DebugRender(pub Color);
 impl Default for DebugRender {
     fn default() -> Self {
         DebugRender(Color::GREEN)
     }
 }
 
-/// Resource that stores the materials used by the debug plugin.
-pub struct DebugMaterials {
-    chunk_material: Handle<StandardMaterial>
-}
+/// Type alias for a color
+type RgbaColor = u32;
 
-fn create_materials(mut commands: Commands, mut materials: ResMut<Assets<StandardMaterial>>) {
-    commands.insert_resource(DebugMaterials {
-        chunk_material: materials.add(Color::GREEN.into())
-    });
+/// Resource that stores the materials used by the debug plugin.
+#[derive(Default)]
+pub struct DebugMaterials {
+    materials: HashMap<RgbaColor, Handle<StandardMaterial>>
 }
 
 /// Scans for voxel chunk entities without a mesh + material, and if found, generates those and inserts them
 fn add_mesh_to_debug_shapes(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    debug_materials: Res<DebugMaterials>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut debug_materials: ResMut<DebugMaterials>,
     mut debug_shapes: Query<
-        (Entity, &Shape, &HalfExtents),
-        (With<DebugRender>, Without<Handle<Mesh>>, Without<Handle<StandardMaterial>>)
+        (Entity, &Shape, &HalfExtents, &DebugRender),
+        (Without<Handle<Mesh>>, Without<Handle<StandardMaterial>>)
     >
 ) {
-    for (entity, shape, extents) in &mut debug_shapes {
+    for (entity, shape, extents, debug) in &mut debug_shapes {
+
+        // Gets material for insertion
+        let color = debug.0;
+        let material = debug_materials.materials
+            .entry(color.as_rgba_u32())
+            .or_insert_with(|| materials.add(color.into()));
+
         match shape {
             Shape::VoxelChunk(chunk) => {
                 commands.entity(entity).insert_bundle(PbrBundle {
@@ -61,7 +69,7 @@ fn add_mesh_to_debug_shapes(
                         chunk,
                         extents.size()
                     )),
-                    material: debug_materials.chunk_material.clone(),
+                    material: material.clone(),
                     ..Default::default()
                 });
             }
@@ -73,15 +81,11 @@ fn add_mesh_to_debug_shapes(
                 ).into();
                 commands.entity(entity).insert_bundle(PbrBundle {
                     mesh: meshes.add(mesh),
-                    material: debug_materials.chunk_material.clone(),
+                    material: material.clone(),
                     ..Default::default()
                 });
             },
             _ => {}
-        };
-        let chunk = match shape {
-            Shape::VoxelChunk(chunk) => chunk,
-            _ => continue
         };
     }
 }

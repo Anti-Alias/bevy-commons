@@ -62,16 +62,18 @@ fn startup(
     });
 
     // Spawns boxes
-    commands.spawn_bundle(PhysicsBundle {
-        current_transform: CurrentTransform(Transform::from_xyz(0.0, 0.0, 0.0)),
-        bounds: HalfExtents::new(0.5, 0.5, 0.5),
-        shape: Shape::Cuboid,
-        weight: Weight(1.0),
-        config: CollisionConfig::new(GROUP_BASIC, GROUP_ALL),
-        friction: Friction::new(1.0),
-        ..default()
-    })
-    .insert(DebugRender::default());
+    for _ in 0..5 {
+        commands.spawn_bundle(PhysicsBundle {
+            current_transform: CurrentTransform(Transform::from_xyz(0.0, 0.0, 0.0)),
+            bounds: HalfExtents::new(0.5, 0.5, 0.5),
+            shape: Shape::Cuboid,
+            weight: Weight(1.0),
+            config: CollisionConfig::new(GROUP_BASIC, GROUP_ALL),
+            friction: Friction::new(1.0),
+            ..default()
+        })
+        .insert(DebugRender::default());
+    }
     
 
     // Spawns camera

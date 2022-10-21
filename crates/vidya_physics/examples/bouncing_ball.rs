@@ -3,6 +3,7 @@ use bevy_inspector_egui::WorldInspectorPlugin;
 use vidya_fixed_timestep::{CurrentTransform, PreviousTransform, FixedTimestepPlugin};
 use vidya_physics::*;
 use bevy::prelude::*;
+use rand::rngs::StdRng;
 
 // Marks ball entity
 #[derive(Component, Debug)]
