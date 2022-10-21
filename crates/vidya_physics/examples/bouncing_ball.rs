@@ -69,7 +69,7 @@ fn startup(
             PhysicsBundle {
                 current_transform: CurrentTransform(start_transform),
                 previous_transform: PreviousTransform(start_transform),
-                bounds: Bounds::new(Vec3::new(1.0, 1.0, 1.0)),
+                bounds: HalfExtents::new(1.0, 1.0, 1.0),
                 velocity: Velocity(Vec3::new(0.05, JUMP_SPEED, 0.025)),
                 ..default()
             }
@@ -86,7 +86,7 @@ fn startup(
 fn bounce_ball(mut entities: Query<
     (
         &mut CurrentTransform,
-        &Bounds,
+        &HalfExtents,
         &mut Velocity
     ),
     With<Ball>>
@@ -95,32 +95,32 @@ fn bounce_ball(mut entities: Query<
 
         // Bounces off floor
         let trans = &mut trans.0.translation;
-        if trans.y - bounds.half_extents.y <= FLOOR {
-            trans.y = FLOOR + bounds.half_extents.y;
+        if trans.y - bounds.0.y <= FLOOR {
+            trans.y = FLOOR + bounds.0.y;
             vel.0.y = JUMP_SPEED;
         }
 
         // Bounces off left wall
-        if trans.x - bounds.half_extents.x <= LEFT_WALL {
-            trans.x = LEFT_WALL + bounds.half_extents.x;
+        if trans.x - bounds.0.x <= LEFT_WALL {
+            trans.x = LEFT_WALL + bounds.0.x;
             vel.0.x *= -1.0;
         }
 
         // Bounces off right wall
-        if trans.x + bounds.half_extents.x >= RIGHT_WALL {
-            trans.x = RIGHT_WALL - bounds.half_extents.x;
+        if trans.x + bounds.0.x >= RIGHT_WALL {
+            trans.x = RIGHT_WALL - bounds.0.x;
             vel.0.x *= -1.0;
         }
 
         // Bounces off near wall
-        if trans.z + bounds.half_extents.z >= NEAR_WALL {
-            trans.z = NEAR_WALL - bounds.half_extents.z;
+        if trans.z + bounds.0.z >= NEAR_WALL {
+            trans.z = NEAR_WALL - bounds.0.z;
             vel.0.z *= -1.0;
         }
 
         // Bounces off far wall
-        if trans.z - bounds.half_extents.z <= FAR_WALL {
-            trans.z = FAR_WALL + bounds.half_extents.z;
+        if trans.z - bounds.0.z <= FAR_WALL {
+            trans.z = FAR_WALL + bounds.0.z;
             vel.0.z *= -1.0;
         }
     }

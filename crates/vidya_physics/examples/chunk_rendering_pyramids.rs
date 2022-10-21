@@ -42,23 +42,23 @@ fn startup(mut commands: Commands) {
     let chunk_xz = generate_chunk(PlaneAxis::XZ);
 
     commands.spawn_bundle(PhysicsBundle {
-        shape: Shape::Chunk(chunk_xy),
+        shape: Shape::VoxelChunk(chunk_xy),
         current_transform: CurrentTransform(Transform::from_xyz(0.0, 0.0, 0.0)),
-        bounds: Bounds::new(Vec3::new(2.0, 2.0, 2.0)),
+        bounds: HalfExtents::new(2.0, 2.0, 2.0),
         ..default()
     }).insert(DebugRender);
 
     commands.spawn_bundle(PhysicsBundle {
-        shape: Shape::Chunk(chunk_yz),
+        shape: Shape::VoxelChunk(chunk_yz),
         current_transform: CurrentTransform(Transform::from_xyz(-3.0, 0.0, 0.0)),
-        bounds: Bounds::new(Vec3::new(2.0, 2.0, 2.0)),
+        bounds: HalfExtents::new(2.0, 2.0, 2.0),
         ..default()
     }).insert(DebugRender);
 
     commands.spawn_bundle(PhysicsBundle {
-        shape: Shape::Chunk(chunk_xz),
+        shape: Shape::VoxelChunk(chunk_xz),
         current_transform: CurrentTransform(Transform::from_xyz(3.0, 0.0, 0.0)),
-        bounds: Bounds::new(Vec3::new(2.0, 2.0, 2.0)),
+        bounds: HalfExtents::new(2.0, 2.0, 2.0),
         ..default()
     }).insert(DebugRender);
 

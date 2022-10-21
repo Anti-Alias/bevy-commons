@@ -10,7 +10,7 @@ use bevy_render::render_resource::PrimitiveTopology;
 use vidya_fixed_timestep::prelude::*;
 use crate::Shape;
 
-use crate::{VoxelChunk, Bounds, VoxelData, Voxel, Orientation};
+use crate::{VoxelChunk, HalfExtents, VoxelData, Voxel, Orientation};
 
 /// Plugin that adds debug graphics objects in the physics engine.
 pub struct PhysicsDebugPlugin;
@@ -43,13 +43,13 @@ fn add_mesh_to_voxel_chunks(
     mut meshes: ResMut<Assets<Mesh>>,
     debug_materials: Res<DebugMaterials>,
     mut meshless_chunks: Query<
-        (Entity, &Shape, &Bounds),
+        (Entity, &Shape, &HalfExtents),
         (With<DebugRender>, Without<Handle<Mesh>>, Without<Handle<StandardMaterial>>)
     >
 ) {
     for (entity, shape, bounds) in &mut meshless_chunks {
         let chunk = match shape {
-            Shape::Chunk(chunk) => chunk,
+            Shape::VoxelChunk(chunk) => chunk,
             _ => continue
         };
         commands.entity(entity).insert_bundle(PbrBundle {
