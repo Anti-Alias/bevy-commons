@@ -40,7 +40,7 @@ fn startup(mut commands: Commands) {
         current_transform: CurrentTransform(Transform::from_xyz(0.0, 0.0, 0.0)),    // Center of the chunk in units
         bounds: HalfExtents::new(5.0, 4.0, 1.0),                                    // Size of the chunk in units
         ..default()
-    }).insert(DebugRender);                                                         // Allows debug info of chunk to be rendered
+    }).insert(DebugRender::default());                                                         // Allows debug info of chunk to be rendered
 
     // Spawns camera
     commands.spawn()

@@ -5,6 +5,7 @@ use bevy_asset::prelude::*;
 use bevy_math::Vec3;
 use bevy_render::mesh::Indices;
 use bevy_render::prelude::*;
+use bevy_render::mesh::shape;
 use bevy_pbr::prelude::*;
 use bevy_render::render_resource::PrimitiveTopology;
 use vidya_fixed_timestep::prelude::*;
@@ -18,13 +19,18 @@ impl Plugin for  PhysicsDebugPlugin {
     fn build(&self, app: &mut bevy_app::App) {
         app
             .add_startup_system(create_materials)
-            .add_fixed_system(add_mesh_to_voxel_chunks);
+            .add_fixed_system(add_mesh_to_debug_shapes);
     }
 }
 
 /// Marks a physics entity for debug rendering
 #[derive(Component, Debug, Copy, Clone, Reflect)]
-pub struct DebugRender; 
+pub struct DebugRender(Color);
+impl Default for DebugRender {
+    fn default() -> Self {
+        DebugRender(Color::GREEN)
+    }
+}
 
 /// Resource that stores the materials used by the debug plugin.
 pub struct DebugMaterials {
@@ -38,28 +44,45 @@ fn create_materials(mut commands: Commands, mut materials: ResMut<Assets<Standar
 }
 
 /// Scans for voxel chunk entities without a mesh + material, and if found, generates those and inserts them
-fn add_mesh_to_voxel_chunks(
+fn add_mesh_to_debug_shapes(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     debug_materials: Res<DebugMaterials>,
-    mut meshless_chunks: Query<
+    mut debug_shapes: Query<
         (Entity, &Shape, &HalfExtents),
         (With<DebugRender>, Without<Handle<Mesh>>, Without<Handle<StandardMaterial>>)
     >
 ) {
-    for (entity, shape, bounds) in &mut meshless_chunks {
+    for (entity, shape, extents) in &mut debug_shapes {
+        match shape {
+            Shape::VoxelChunk(chunk) => {
+                commands.entity(entity).insert_bundle(PbrBundle {
+                    mesh: meshes.add(create_mesh_from_chunk(
+                        chunk,
+                        extents.size()
+                    )),
+                    material: debug_materials.chunk_material.clone(),
+                    ..Default::default()
+                });
+            }
+            Shape::Cuboid => {
+                let mesh: Mesh = shape::Box::new(
+                    extents.width(),
+                    extents.height(),
+                    extents.depth()
+                ).into();
+                commands.entity(entity).insert_bundle(PbrBundle {
+                    mesh: meshes.add(mesh),
+                    material: debug_materials.chunk_material.clone(),
+                    ..Default::default()
+                });
+            },
+            _ => {}
+        };
         let chunk = match shape {
             Shape::VoxelChunk(chunk) => chunk,
             _ => continue
         };
-        commands.entity(entity).insert_bundle(PbrBundle {
-            mesh: meshes.add(create_mesh_from_chunk(
-                chunk,
-                bounds.size()
-            )),
-            material: debug_materials.chunk_material.clone(),
-            ..Default::default()
-        });
     }
 }
 

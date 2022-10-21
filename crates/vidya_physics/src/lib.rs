@@ -105,6 +105,15 @@ impl HalfExtents {
     pub fn new(width: f32, height: f32, depth: f32) -> Self {
         Self(Vec3::new(width, height, depth) / 2.0)
     }
+    pub fn width(&self) -> f32 {
+        self.0.x * 2.0
+    }
+    pub fn height(&self) -> f32 {
+        self.0.y * 2.0
+    }
+    pub fn depth(&self) -> f32 {
+        self.0.z * 2.0
+    }
     pub fn size(&self) -> Vec3 {
         self.0 * 2.0
     }

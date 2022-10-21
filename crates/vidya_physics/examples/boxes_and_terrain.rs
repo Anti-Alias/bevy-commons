@@ -1,7 +1,7 @@
 use vidya_camera_target::prelude::*;
 use vidya_fixed_timestep::{CurrentTransform, FixedTimestepPlugin};
 use vidya_physics::*;
-use vidya_physics::debug::DebugRender;
+use vidya_physics::debug::*;
 
 use bevy::prelude::*;
 
@@ -34,6 +34,7 @@ pub fn main() {
         .add_plugin(WorldInspectorPlugin::new())
         .add_plugin(FixedTimestepPlugin::default())
         .add_plugin(PhysicsPlugin)
+        .add_plugin(PhysicsDebugPlugin)
         .add_plugin(CameraTargetPlugin)
         .add_startup_system(startup)
         .add_system(bounce_ball)
@@ -47,7 +48,7 @@ fn startup(
 ) {
 
     // Adds gravity
-    commands.insert_resource(Gravity(Vec3::new(0.0, -0.01, 0.0)));
+    //commands.insert_resource(Gravity(Vec3::new(0.0, -0.01, 0.0)));
 
     // Spawns light above scene
     commands.spawn_bundle(PointLightBundle {
@@ -60,18 +61,17 @@ fn startup(
         ..default()
     });
 
-    // Spawns terrain
+    // Spawns boxes
     commands.spawn_bundle(PhysicsBundle {
         current_transform: CurrentTransform(Transform::from_xyz(0.0, 0.0, 0.0)),
-        bounds: HalfExtents(Vec3::new(2.0, 2.0, 2.0)),
-        //shape: Shape::VoxelChunk(todo!()),
+        bounds: HalfExtents::new(0.5, 0.5, 0.5),
         shape: Shape::Cuboid,
         weight: Weight(1.0),
         config: CollisionConfig::new(GROUP_BASIC, GROUP_ALL),
         friction: Friction::new(1.0),
         ..default()
     })
-    .insert(DebugRender);
+    .insert(DebugRender::default());
     
 
     // Spawns camera

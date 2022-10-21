@@ -46,21 +46,21 @@ fn startup(mut commands: Commands) {
         current_transform: CurrentTransform(Transform::from_xyz(0.0, 0.0, 0.0)),
         bounds: HalfExtents::new(2.0, 2.0, 2.0),
         ..default()
-    }).insert(DebugRender);
+    }).insert(DebugRender::default());
 
     commands.spawn_bundle(PhysicsBundle {
         shape: Shape::VoxelChunk(chunk_yz),
         current_transform: CurrentTransform(Transform::from_xyz(-3.0, 0.0, 0.0)),
         bounds: HalfExtents::new(2.0, 2.0, 2.0),
         ..default()
-    }).insert(DebugRender);
+    }).insert(DebugRender::default());
 
     commands.spawn_bundle(PhysicsBundle {
         shape: Shape::VoxelChunk(chunk_xz),
         current_transform: CurrentTransform(Transform::from_xyz(3.0, 0.0, 0.0)),
         bounds: HalfExtents::new(2.0, 2.0, 2.0),
         ..default()
-    }).insert(DebugRender);
+    }).insert(DebugRender::default());
 
     // Spawns camera
     commands.spawn()
