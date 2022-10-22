@@ -261,6 +261,12 @@ impl AABB {
         self.far() < other.near() &&
         self.near() > other.far()
     }
+    pub fn intersects_yz(&self, other: &Self) -> bool {
+        self.bottom() < other.top() &&
+        self.top() > other.bottom() &&
+        self.far() < other.near() &&
+        self.near() > other.far()
+    }
     pub fn intersects(&self, other: &Self) -> bool {
         self.left() < other.right() &&
         self.right() > other.left() &&
@@ -311,7 +317,9 @@ fn update(
     // For each substep...
     let steps = config.substeps as f32;
     let inv_steps = 1.0 / steps;
-    for _ in 0..config.substeps {
+    bevy_log::info!("---------------- Collision pass ---------------- ");
+    for i in 0..config.substeps {
+        bevy_log::info!("---- Substep {} ----", i);
 
         // Computes collisions between objects
         let mut combinations = physics_objects.iter_combinations_mut();
@@ -342,12 +350,16 @@ fn update(
 
             // If collision found, distribute the response to a and b
             if let Some(coll) = coll {
+
                 let (resp_a, resp_b) = match (a_affected, b_affected) {
                     (false, false) => continue,
                     (false, true) => (CollisionResponse::Empty, CollisionResponse::for_b(&coll)),
                     (true, false) => (CollisionResponse::for_a(&coll), CollisionResponse::Empty),
                     (true, true) => CollisionResponse::weighted(&coll, a_weight.0, b_weight.0)
                 };
+                // bevy_log::debug!("Coll: {:?}", coll);
+                // bevy_log::debug!("A resp: {:?}", resp_a);
+                // bevy_log::debug!("B resp: {:?}", resp_a);
                 if resp_a.is_closer(&a_resp) {
                     *a_resp = resp_a;
                 }
@@ -365,7 +377,7 @@ fn update(
                 },
                 CollisionResponse::Value { position_delta, velocity_delta, .. } => {
                     trans.0.translation += vel.0 * inv_steps + position_delta;
-                    vel.0 += velocity_delta;
+                    vel.0 += velocity_delta * steps;
                     *resp = CollisionResponse::Empty;
                 }
             }

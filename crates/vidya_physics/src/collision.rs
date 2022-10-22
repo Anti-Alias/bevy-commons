@@ -146,28 +146,71 @@ pub(crate) fn collide_cuboid_cuboid(a: AABB, b: AABB, b_vel: Vec3) -> Option<Col
     if a.intersects(&bn) {
 
         // Handles collisions for top and bottom
-        let collide_xz = |ay: f32, by: f32, byn: f32| -> Option<Collision> {
+        let collide_xz = |ay: f32, by: f32, byn: f32, na: Vec3, nb: Vec3| -> Option<Collision> {
             let t = compute_t(ay, by, byn);
+            if t < 0.0 || t > 1.0 {
+                return None;
+            }
             let bi = b.interp(t, b_vel);
             if bi.intersects_xz(&a) {
                 return Some(Collision {
                     t,
                     position_delta: Vec3::new(0.0, ay - byn, 0.0),
                     velocity_delta: Vec3::new(0.0, -b_vel.y, 0.0),
-                    normal_a: Vec3::Y,
-                    normal_b: Vec3::NEG_Y,
+                    normal_a: na,
+                    normal_b: nb,
+                })
+            }
+            return None
+        };
+
+        // Handles collisions for left and right
+        let collide_yz = |ax: f32, bx: f32, bxn: f32, na: Vec3, nb: Vec3| -> Option<Collision> {
+            let t = compute_t(ax, bx, bxn);
+            let bi = b.interp(t, b_vel);
+            if bi.intersects_yz(&a) {
+                return Some(Collision {
+                    t,
+                    position_delta: Vec3::new(ax - bxn, 0.0, 0.0),
+                    velocity_delta: Vec3::new(-b_vel.x, 0.0, 0.0),
+                    normal_a: na,
+                    normal_b: nb,
                 })
             }
             return None
         };
 
         // TOP
-        closest_coll = collide_xz(a.top(), b.bottom(), bn.bottom());
+        if b_vel.y < 0.0 {
+            let coll = collide_xz(a.top(), b.bottom(), bn.bottom(), Vec3::Y, Vec3::NEG_Y);
+            if is_coll_closer(&coll, &closest_coll) {
+                closest_coll = coll;
+            }
+        }
 
         // BOTTOM
-        let coll = collide_xz(a.bottom(), b.top(), bn.top());
-        if is_coll_closer(&coll, &closest_coll) {
-            closest_coll = coll;
+        if b_vel.y > 0.0 {
+            let coll = collide_xz(a.bottom(), b.top(), bn.top(), Vec3::NEG_Y, Vec3::Y);
+            if is_coll_closer(&coll, &closest_coll) {
+                closest_coll = coll;
+            }
+        }
+
+        // LEFT
+        if b_vel.x > 0.0 {
+            let coll = collide_yz(a.left(), b.right(), bn.right(), Vec3::NEG_X, Vec3::X);
+            if is_coll_closer(&coll, &closest_coll) {
+                closest_coll = coll;
+            }
+        }
+
+        // RIGHT
+        if b_vel.x < 0.0 {
+            let coll = collide_yz(a.right(), b.left(), bn.left(), Vec3::X, Vec3::NEG_X);
+            if is_coll_closer(&coll, &closest_coll) {
+                closest_coll = coll;
+                bevy_log::info!("RIGHT: {:?}\nb_vel: {}", coll, b_vel);
+            }
         }
     }
 

@@ -1,3 +1,4 @@
+use bevy_log::{LogSettings, Level};
 use rand::{SeedableRng, RngCore, Rng};
 use vidya_camera_target::prelude::*;
 use vidya_fixed_timestep::{CurrentTransform, FixedTimestepPlugin};
@@ -27,6 +28,10 @@ pub fn main() {
 
     App::new()
         .register_type::<Ball>()
+        .insert_resource(LogSettings {
+            level: Level::DEBUG,
+            ..default()
+        })
         .add_plugins(DefaultPlugins)
         .add_plugin(WorldInspectorPlugin::new())
         .add_plugin(FixedTimestepPlugin::default())
@@ -82,26 +87,27 @@ fn startup(
             friction: Friction::new(1.0),
             ..default()
         })
-        .insert(DebugRender(Color::RED));
+        .insert(DebugRender(Color::RED))
+        .insert(AntiGravity);
     }
 
-    // Floor
-    commands.spawn_bundle(PhysicsBundle {
-        current_transform: CurrentTransform(Transform::from_xyz(0.0, 0.0, 0.0)),
-        bounds: HalfExtents::new(10.0, 0.25, 10.0),
-        shape: Shape::Cuboid,
-        config: CollisionConfig::new(GROUP_STATIC_TERRAIN, GROUP_NONE),
-        ..default()
-    })
-    .insert_bundle((
-        DebugRender::default(),
-        AntiGravity
-    ));
+    // // Floor
+    // commands.spawn_bundle(PhysicsBundle {
+    //     current_transform: CurrentTransform(Transform::from_xyz(0.0, 0.0, 0.0)),
+    //     bounds: HalfExtents::new(10.0, 0.25, 10.0),
+    //     shape: Shape::Cuboid,
+    //     config: CollisionConfig::new(GROUP_STATIC_TERRAIN, GROUP_NONE),
+    //     ..default()
+    // })
+    // .insert_bundle((
+    //     DebugRender::default(),
+    //     AntiGravity
+    // ));
 
     // Right wall
     commands.spawn_bundle(PhysicsBundle {
         current_transform: CurrentTransform(Transform::from_xyz(4.75, 0.25, 0.0)),
-        bounds: HalfExtents::new(0.5, 0.5, 10.0),
+        bounds: HalfExtents::new(0.5, 10.0, 10.0),
         shape: Shape::Cuboid,
         config: CollisionConfig::new(GROUP_STATIC_TERRAIN, GROUP_NONE),
         ..default()
@@ -111,44 +117,44 @@ fn startup(
         AntiGravity
     ));
 
-    // Left wall
-    commands.spawn_bundle(PhysicsBundle {
-        current_transform: CurrentTransform(Transform::from_xyz(-4.75, 0.25, 0.0)),
-        bounds: HalfExtents::new(0.5, 0.5, 10.0),
-        shape: Shape::Cuboid,
-        config: CollisionConfig::new(GROUP_STATIC_TERRAIN, GROUP_NONE),
-        ..default()
-    })
-    .insert_bundle((
-        DebugRender::default(),
-        AntiGravity
-    ));
+    // // Left wall
+    // commands.spawn_bundle(PhysicsBundle {
+    //     current_transform: CurrentTransform(Transform::from_xyz(-4.75, 0.25, 0.0)),
+    //     bounds: HalfExtents::new(0.5, 0.5, 10.0),
+    //     shape: Shape::Cuboid,
+    //     config: CollisionConfig::new(GROUP_STATIC_TERRAIN, GROUP_NONE),
+    //     ..default()
+    // })
+    // .insert_bundle((
+    //     DebugRender::default(),
+    //     AntiGravity
+    // ));
 
-    // Far wall
-    commands.spawn_bundle(PhysicsBundle {
-        current_transform: CurrentTransform(Transform::from_xyz(0.0, 0.25, -4.75)),
-        bounds: HalfExtents::new(10.0, 0.5, 0.5),
-        shape: Shape::Cuboid,
-        config: CollisionConfig::new(GROUP_STATIC_TERRAIN, GROUP_NONE),
-        ..default()
-    })
-    .insert_bundle((
-        DebugRender::default(),
-        AntiGravity
-    ));
+    // // Far wall
+    // commands.spawn_bundle(PhysicsBundle {
+    //     current_transform: CurrentTransform(Transform::from_xyz(0.0, 0.25, -4.75)),
+    //     bounds: HalfExtents::new(10.0, 0.5, 0.5),
+    //     shape: Shape::Cuboid,
+    //     config: CollisionConfig::new(GROUP_STATIC_TERRAIN, GROUP_NONE),
+    //     ..default()
+    // })
+    // .insert_bundle((
+    //     DebugRender::default(),
+    //     AntiGravity
+    // ));
     
-    // Near wall
-    commands.spawn_bundle(PhysicsBundle {
-        current_transform: CurrentTransform(Transform::from_xyz(0.0, 0.25, 4.75)),
-        bounds: HalfExtents::new(10.0, 0.5, 0.5),
-        shape: Shape::Cuboid,
-        config: CollisionConfig::new(GROUP_STATIC_TERRAIN, GROUP_NONE),
-        ..default()
-    })
-    .insert_bundle((
-        DebugRender::default(),
-        AntiGravity
-    ));
+    // // Near wall
+    // commands.spawn_bundle(PhysicsBundle {
+    //     current_transform: CurrentTransform(Transform::from_xyz(0.0, 0.25, 4.75)),
+    //     bounds: HalfExtents::new(10.0, 0.5, 0.5),
+    //     shape: Shape::Cuboid,
+    //     config: CollisionConfig::new(GROUP_STATIC_TERRAIN, GROUP_NONE),
+    //     ..default()
+    // })
+    // .insert_bundle((
+    //     DebugRender::default(),
+    //     AntiGravity
+    // ));
     
 
     // Spawns camera
