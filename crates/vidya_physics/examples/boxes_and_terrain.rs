@@ -1,7 +1,10 @@
+use rand::{SeedableRng, RngCore, Rng};
 use vidya_camera_target::prelude::*;
 use vidya_fixed_timestep::{CurrentTransform, FixedTimestepPlugin};
 use vidya_physics::*;
 use vidya_physics::debug::*;
+
+use rand::rngs::StdRng;
 
 use bevy::prelude::*;
 
@@ -23,12 +26,6 @@ const JUMP_SPEED: f32 = 0.2;
 pub fn main() {
 
     App::new()
-        .insert_resource(WindowDescriptor {
-            width: 512.0,
-            height: 512.0,
-            position: WindowPosition::At(Vec2::new(1024.0, 0.0)),
-            ..default()
-        })
         .register_type::<Ball>()
         .add_plugins(DefaultPlugins)
         .add_plugin(WorldInspectorPlugin::new())
@@ -47,8 +44,16 @@ fn startup(
     mut materials: ResMut<Assets<StandardMaterial>>
 ) {
 
+    // Random number generator
+    let mut rng = StdRng::from_seed([
+        42,42,42,42,42,42,42,42,
+        42,42,42,42,42,42,42,42,
+        42,42,42,42,42,42,42,42,
+        42,42,42,42,42,42,42,42
+    ]);
+
     // Adds gravity
-    //commands.insert_resource(Gravity(Vec3::new(0.0, -0.01, 0.0)));
+    commands.insert_resource(Gravity(Vec3::new(0.0, -0.005, 0.0)));
 
     // Spawns light above scene
     commands.spawn_bundle(PointLightBundle {
@@ -62,13 +67,23 @@ fn startup(
     });
 
     // Spawns boxes
-    for _ in 0..5 {
+    const SPEED: f32 = 0.05;
+    for _ in 0..10 {
         commands.spawn_bundle(PhysicsBundle {
-            current_transform: CurrentTransform(Transform::from_xyz(0.0, 0.0, 0.0)),
+            current_transform: CurrentTransform(Transform::from_translation(Vec3::new(
+                rng.gen_range(-3.0..3.0),
+                rng.gen_range(-3.0..3.0),
+                rng.gen_range(-3.0..3.0)
+            ))),
             bounds: HalfExtents::new(0.5, 0.5, 0.5),
             shape: Shape::Cuboid,
             weight: Weight(1.0),
             config: CollisionConfig::new(GROUP_BASIC, GROUP_ALL),
+            velocity: Velocity(Vec3::new(
+                rng.gen_range(-SPEED..SPEED),
+                rng.gen_range(-SPEED..SPEED),
+                rng.gen_range(-SPEED..SPEED),
+            )),
             friction: Friction::new(1.0),
             ..default()
         })
