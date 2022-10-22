@@ -64,7 +64,7 @@ fn startup(
     // Spawns boxes
     const RANGE: f32 = 3.0;
     const SPEED: f32 = 0.05;
-    for _ in 0..10 {
+    for _ in 0..1 {
         commands.spawn_bundle(PhysicsBundle {
             current_transform: CurrentTransform(Transform::from_translation(Vec3::new(
                 rng.gen_range(-RANGE..RANGE),
@@ -85,13 +85,64 @@ fn startup(
         .insert(DebugRender(Color::RED));
     }
 
-    // Spawns terrain
+    // Floor
     commands.spawn_bundle(PhysicsBundle {
         current_transform: CurrentTransform(Transform::from_xyz(0.0, 0.0, 0.0)),
         bounds: HalfExtents::new(10.0, 0.25, 10.0),
         shape: Shape::Cuboid,
         config: CollisionConfig::new(GROUP_STATIC_TERRAIN, GROUP_NONE),
-        friction: Friction::new(1.0),
+        ..default()
+    })
+    .insert_bundle((
+        DebugRender::default(),
+        AntiGravity
+    ));
+
+    // Right wall
+    commands.spawn_bundle(PhysicsBundle {
+        current_transform: CurrentTransform(Transform::from_xyz(4.75, 0.25, 0.0)),
+        bounds: HalfExtents::new(0.5, 0.5, 10.0),
+        shape: Shape::Cuboid,
+        config: CollisionConfig::new(GROUP_STATIC_TERRAIN, GROUP_NONE),
+        ..default()
+    })
+    .insert_bundle((
+        DebugRender::default(),
+        AntiGravity
+    ));
+
+    // Left wall
+    commands.spawn_bundle(PhysicsBundle {
+        current_transform: CurrentTransform(Transform::from_xyz(-4.75, 0.25, 0.0)),
+        bounds: HalfExtents::new(0.5, 0.5, 10.0),
+        shape: Shape::Cuboid,
+        config: CollisionConfig::new(GROUP_STATIC_TERRAIN, GROUP_NONE),
+        ..default()
+    })
+    .insert_bundle((
+        DebugRender::default(),
+        AntiGravity
+    ));
+
+    // Far wall
+    commands.spawn_bundle(PhysicsBundle {
+        current_transform: CurrentTransform(Transform::from_xyz(0.0, 0.25, -4.75)),
+        bounds: HalfExtents::new(10.0, 0.5, 0.5),
+        shape: Shape::Cuboid,
+        config: CollisionConfig::new(GROUP_STATIC_TERRAIN, GROUP_NONE),
+        ..default()
+    })
+    .insert_bundle((
+        DebugRender::default(),
+        AntiGravity
+    ));
+    
+    // Near wall
+    commands.spawn_bundle(PhysicsBundle {
+        current_transform: CurrentTransform(Transform::from_xyz(0.0, 0.25, 4.75)),
+        bounds: HalfExtents::new(10.0, 0.5, 0.5),
+        shape: Shape::Cuboid,
+        config: CollisionConfig::new(GROUP_STATIC_TERRAIN, GROUP_NONE),
         ..default()
     })
     .insert_bundle((

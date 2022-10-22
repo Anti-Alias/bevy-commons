@@ -252,6 +252,23 @@ impl AABB {
     pub fn set_far(&mut self, far: f32) {
         self.center.z = far + self.half_extents.z;
     }
+    pub fn interp(&self, t: f32, dir: Vec3) -> Self {
+        Self::new(self.center + dir * t, self.half_extents)
+    }
+    pub fn intersects_xz(&self, other: &Self) -> bool {
+        self.left() < other.right() &&
+        self.right() > other.left() &&
+        self.far() < other.near() &&
+        self.near() > other.far()
+    }
+    pub fn intersects(&self, other: &Self) -> bool {
+        self.left() < other.right() &&
+        self.right() > other.left() &&
+        self.bottom() < other.top() &&
+        self.top() > other.bottom() &&
+        self.far() < other.near() &&
+        self.near() > other.far()
+    }
 }
 
 //////////////////////////////////////////////// Systems ////////////////////////////////////////////////

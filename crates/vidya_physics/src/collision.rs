@@ -15,6 +15,8 @@ pub const GROUP_STATIC_TERRAIN: CollisionGroups =       0b00000000_00000000_0000
 pub const GROUP_MOVING_TERRAIN: CollisionGroups =       0b00000000_00000000_00000000_00000100;
 pub const GROUP_BASIC: CollisionGroups =                0b00000000_00000000_00000000_00001000;
 
+const EPSILON: f32 = 0.00001;
+
 
 /// Represents a collision that occurred between two physics objects
 #[derive(Copy, Clone, PartialEq, Debug)]
@@ -131,12 +133,72 @@ pub(crate) fn collide(a: PhysObj<'_>, b: PhysObj<'_>) -> Option<Collision> {
     }
 }
 
-pub(crate) fn collide_cuboid_cuboid(a_bounds: AABB, b_bounds: AABB, bevy_vel: Vec3) -> Option<Collision> {
+pub(crate) fn collide_cuboid_cuboid(a: AABB, b: AABB, b_vel: Vec3) -> Option<Collision> {
+    
+    let mut closest_coll = None;
+
+    // Computes b + vel
+    let bn = AABB::new(
+        b.center + b_vel,
+        b.half_extents
+    );
+
+    if a.intersects(&bn) {
+
+        // Handles collisions for top and bottom
+        let collide_xz = |ay: f32, by: f32, byn: f32| -> Option<Collision> {
+            let t = compute_t(ay, by, byn);
+            let bi = b.interp(t, b_vel);
+            if bi.intersects_xz(&a) {
+                return Some(Collision {
+                    t,
+                    position_delta: Vec3::new(0.0, ay - byn, 0.0),
+                    velocity_delta: Vec3::new(0.0, -b_vel.y, 0.0),
+                    normal_a: Vec3::Y,
+                    normal_b: Vec3::NEG_Y,
+                })
+            }
+            return None
+        };
+
+        // TOP
+        closest_coll = collide_xz(a.top(), b.bottom(), bn.bottom());
+
+        // BOTTOM
+        let coll = collide_xz(a.bottom(), b.top(), bn.top());
+        if is_coll_closer(&coll, &closest_coll) {
+            closest_coll = coll;
+        }
+    }
+
+    closest_coll
+}
+
+pub(crate) fn collide_chunk_cuboid(a_bounds: AABB, a_chunk: &VoxelChunk, b_bounds: AABB, b_vel: Vec3) -> Option<Collision> {
     None
 }
 
-pub(crate) fn collide_chunk_cuboid(a_bounds: AABB, a_chunk: &VoxelChunk, b_bounds: AABB, bevy_vel: Vec3) -> Option<Collision> {
-    None
+fn compute_t(a_val: f32, b_val: f32, b_next_val: f32) -> f32 {
+    let b_diff = b_next_val - b_val;
+    if b_diff.abs() > EPSILON {
+        (a_val - b_val) / b_diff
+    }
+    else {
+        0.0
+    }
+}
+
+/// Checks is coll_a is closer than coll_b
+fn is_coll_closer(
+    coll_a: &Option<Collision>,
+    coll_b: &Option<Collision>
+) -> bool {
+    match (coll_a, coll_b) {
+        (None, None) => false,
+        (Some(_), None) => true,
+        (None, Some(_)) => false,
+        (Some(coll_a), Some(coll_b)) => coll_a.t < coll_b.t
+    }
 }
 
 #[cfg(test)]
