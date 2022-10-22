@@ -42,7 +42,7 @@ impl VoxelData {
 }
 
 /// Represents a chunk of [`Voxel`]s stored in an [`Entity`].
-#[derive(Component, Debug, Clone, Reflect)]
+#[derive(Debug, Clone, Reflect)]
 pub struct VoxelChunk {
     size: UVec3,
     #[reflect(ignore)]

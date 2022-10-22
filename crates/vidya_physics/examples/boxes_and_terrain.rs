@@ -45,12 +45,7 @@ fn startup(
 ) {
 
     // Random number generator
-    let mut rng = StdRng::from_seed([
-        42,42,42,42,42,42,42,42,
-        42,42,42,42,42,42,42,42,
-        42,42,42,42,42,42,42,42,
-        42,42,42,42,42,42,42,42
-    ]);
+    let mut rng = StdRng::from_seed([42; 32]);
 
     // Adds gravity
     commands.insert_resource(Gravity(Vec3::new(0.0, -0.005, 0.0)));
@@ -67,17 +62,17 @@ fn startup(
     });
 
     // Spawns boxes
+    const RANGE: f32 = 3.0;
     const SPEED: f32 = 0.05;
     for _ in 0..10 {
         commands.spawn_bundle(PhysicsBundle {
             current_transform: CurrentTransform(Transform::from_translation(Vec3::new(
-                rng.gen_range(-3.0..3.0),
-                rng.gen_range(-3.0..3.0),
-                rng.gen_range(-3.0..3.0)
+                rng.gen_range(-RANGE..RANGE),
+                rng.gen_range(-RANGE..RANGE) + 4.0,
+                rng.gen_range(-RANGE..RANGE),
             ))),
             bounds: HalfExtents::new(0.5, 0.5, 0.5),
             shape: Shape::Cuboid,
-            weight: Weight(1.0),
             config: CollisionConfig::new(GROUP_BASIC, GROUP_ALL),
             velocity: Velocity(Vec3::new(
                 rng.gen_range(-SPEED..SPEED),
@@ -87,8 +82,22 @@ fn startup(
             friction: Friction::new(1.0),
             ..default()
         })
-        .insert(DebugRender::default());
+        .insert(DebugRender(Color::RED));
     }
+
+    // Spawns terrain
+    commands.spawn_bundle(PhysicsBundle {
+        current_transform: CurrentTransform(Transform::from_xyz(0.0, 0.0, 0.0)),
+        bounds: HalfExtents::new(10.0, 0.25, 10.0),
+        shape: Shape::Cuboid,
+        config: CollisionConfig::new(GROUP_STATIC_TERRAIN, GROUP_NONE),
+        friction: Friction::new(1.0),
+        ..default()
+    })
+    .insert_bundle((
+        DebugRender::default(),
+        AntiGravity
+    ));
     
 
     // Spawns camera

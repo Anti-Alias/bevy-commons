@@ -29,8 +29,8 @@ impl Plugin for PhysicsPlugin {
             .register_type::<HalfExtents>()
             .register_type::<Friction>()
             .register_type::<PhysicsInterpolate>()
-            .register_type::<VoxelChunk>()
             .register_type::<CollisionResponse>()
+            .register_type::<AntiGravity>()
             .init_resource::<PhysicsConfig>()
             .add_system_set_to_stage(FixedTimestepStages::PostFixedUpdate, SystemSet::new()
                 .with_system(apply_gravity
@@ -94,8 +94,13 @@ pub enum Shape {
 }
 
 /// Weight of an [`Entity`].
-#[derive(Component, Debug, Copy, Clone, PartialEq, Default, Reflect)]
+#[derive(Component, Debug, Copy, Clone, PartialEq, Reflect)]
 pub struct Weight(pub f32);
+impl Default for Weight {
+    fn default() -> Self {
+        Weight(1.0)
+    }
+}
 
 /// Represents the bounds of an unscaled [`Entity`].
 #[derive(Component, Debug, Copy, Clone, PartialEq, Default, Reflect)]
@@ -118,6 +123,11 @@ impl HalfExtents {
         self.0 * 2.0
     }
 }
+
+// Marker component that prevents an [`Entity`] from being affected by gravity.
+#[derive(Component, Debug, Copy, Clone, Default, Reflect)]
+#[reflect(Component)]
+pub struct AntiGravity;
 
 
 /// Frictional value of an [`Entity`].
@@ -246,11 +256,10 @@ impl AABB {
 
 //////////////////////////////////////////////// Systems ////////////////////////////////////////////////
 
-/// Applies gravity if there is a gravity resource.
-/// Should not run if gravity resource not present.
+/// Applies gravity to all physics objects.
 fn apply_gravity(
     gravity: Option<Res<Gravity>>,
-    mut velocities: Query<&mut Velocity>
+    mut velocities: Query<&mut Velocity, Without<AntiGravity>>
 ) {
     let gravity = match gravity {
         Some(gravity) => gravity,
