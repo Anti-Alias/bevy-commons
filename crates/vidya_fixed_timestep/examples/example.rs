@@ -28,7 +28,7 @@ fn startup(
 ) {
 
     // Spawns camera
-    commands.spawn_bundle(Camera3dBundle {
+    commands.spawn(Camera3dBundle {
         transform: Transform::from_xyz(0.0, 0.0, 10.0),
         ..default()
     });
@@ -42,8 +42,7 @@ fn startup(
 
     // Spawns ball to interpolate
     commands
-        .spawn()
-        .insert_bundle(PbrBundle {
+        .spawn(PbrBundle {
             mesh: meshes.add(ball_mesh),
             material: materials.add(ball_material),
             transform: Transform::from_xyz(0.0, 0.0, 0.0),
@@ -54,7 +53,7 @@ fn startup(
         .insert(CurrentTransform(DEST));
 
     // Spawns light
-    commands.spawn_bundle(PointLightBundle {
+    commands.spawn(PointLightBundle {
         point_light: PointLight {
             intensity: 1500.0,
             ..default()
