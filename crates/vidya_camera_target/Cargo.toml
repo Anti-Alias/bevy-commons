@@ -5,12 +5,12 @@ edition = "2021"
 description = "Repository that adds simple camera targetting logic"
 
 [dependencies]
-bevy_app = "0.8.0"
-bevy_transform = "0.8.0"
-bevy_ecs = "0.8.0"
-bevy_math = "0.8.0"
-bevy_log = "0.8.0"
+bevy_app = "0.9.1"
+bevy_transform = "0.9.1"
+bevy_ecs = "0.9.1"
+bevy_math = "0.9.1"
+bevy_log = "0.9.1"
 vidya_fixed_timestep = { path = "../vidya_fixed_timestep" }
 
 [dev-dependencies]
-bevy = { version = "0.8.0", features = ["dynamic"] }
+bevy = { version = "0.9.1", features = ["dynamic"] }

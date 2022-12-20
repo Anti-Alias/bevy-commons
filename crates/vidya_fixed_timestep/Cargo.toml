@@ -5,11 +5,11 @@ edition = "2021"
 description = "A small crate that defines stages and components useful to a game that updates on a fixed timestep"
 
 [dependencies]
-bevy_app = "0.8.0"
-bevy_transform = "0.8.0"
-bevy_ecs = "0.8.0"
-bevy_time = "0.8.0"
-bevy_reflect = "0.8.0"
+bevy_app = "0.9.1"
+bevy_transform = "0.9.1"
+bevy_ecs = "0.9.1"
+bevy_time = "0.9.1"
+bevy_reflect = "0.9.1"
 
 [dev-dependencies]
-bevy = { version = "0.8.0", features = ["dynamic"] }
+bevy = { version = "0.9.1", features = ["dynamic"] }

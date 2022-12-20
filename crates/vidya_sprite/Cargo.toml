@@ -5,4 +5,4 @@ edition = "2021"
 description = "Repository for rendering sprites and sprite animations in 3D"
 
 [dependencies]
-bevy = { version = "0.8.0", features = ["dynamic"] }
+bevy = { version = "0.9.1", features = ["dynamic"] }
