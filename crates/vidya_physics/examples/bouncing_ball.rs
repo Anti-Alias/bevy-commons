@@ -3,7 +3,6 @@ use bevy_inspector_egui::WorldInspectorPlugin;
 use vidya_fixed_timestep::{CurrentTransform, PreviousTransform, FixedTimestepPlugin};
 use vidya_physics::*;
 use bevy::prelude::*;
-use rand::rngs::StdRng;
 
 // Marks ball entity
 #[derive(Component, Debug)]
@@ -60,13 +59,12 @@ fn startup(
     // Spawns ball
     let start_transform = Transform::from_xyz(0.0, 0.5, 0.0);
     commands
-        .spawn()
-        .insert_bundle(PbrBundle {
+        .spawn(PbrBundle {
             mesh: meshes.add(Icosphere { radius: 0.5, subdivisions: 3 }.into()),
             material: materials.add(Color::RED.into()),
             ..default()
         })
-        .insert_bundle(
+        .insert(
             PhysicsBundle {
                 current_transform: CurrentTransform(start_transform),
                 previous_transform: PreviousTransform(start_transform),
@@ -78,7 +76,7 @@ fn startup(
         .insert(Ball);
 
     // Spawns camera
-    commands.spawn_bundle(Camera3dBundle {
+    commands.spawn(Camera3dBundle {
         transform: Transform::from_xyz(0.0, 2.0, 10.0).looking_at(Vec3::new(0.0, 0.0, 0.0), Vec3::Y),
         ..default()
     });

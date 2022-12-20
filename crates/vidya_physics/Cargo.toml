@@ -14,7 +14,7 @@ bevy_reflect = "0.9.1"
 bevy_macro_utils = "0.9.1"
 bevy_log = "0.9.1"
 vidya_fixed_timestep = { path = "../vidya_fixed_timestep" }
-bevy-inspector-egui = "0.13.0"
+bevy-inspector-egui = "0.15.0"
 bevy_asset = { version = "0.9.1", optional = true }
 bevy_render = { version = "0.9.1", optional = true }
 bevy_pbr = { version = "0.9.1", optional = true }

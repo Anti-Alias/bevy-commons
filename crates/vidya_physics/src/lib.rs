@@ -24,7 +24,6 @@ impl Plugin for PhysicsPlugin {
         // Runs physics systems before interpolation
         app
             .register_type::<Velocity>()
-            .register_type::<Shape>()
             .register_type::<Weight>()
             .register_type::<HalfExtents>()
             .register_type::<Friction>()
@@ -67,7 +66,7 @@ pub enum PhysicsSystems {
 //////////////////////////////////////////////// Resources ////////////////////////////////////////////////
 
 /// Resource that stores the gravity of the situation ;)
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Resource, Debug, Copy, Clone, PartialEq)]
 pub struct Gravity(pub Vec3);
 impl Default for Gravity {
     fn default() -> Self {
@@ -84,8 +83,7 @@ impl Default for Gravity {
 pub struct Velocity(pub Vec3);
 
 /// Represents the shape of an [`Entity`].
-#[derive(Component, Debug, Default, Clone, Reflect)]
-#[reflect(Component)]
+#[derive(Component, Debug, Clone, Default)]
 pub enum Shape {
     #[default]
     Cuboid,
@@ -386,7 +384,7 @@ fn update(
 }
 
 /// Configuration for the physics engine
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Resource, Copy, Clone, PartialEq)]
 pub struct PhysicsConfig {
     pub substeps: usize
 }

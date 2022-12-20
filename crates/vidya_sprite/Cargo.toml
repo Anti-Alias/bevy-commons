@@ -1,8 +1,0 @@
-[package]
-name = "vidya_sprite"
-version = "0.1.0"
-edition = "2021"
-description = "Repository for rendering sprites and sprite animations in 3D"
-
-[dependencies]
-bevy = { version = "0.9.1", features = ["dynamic"] }
